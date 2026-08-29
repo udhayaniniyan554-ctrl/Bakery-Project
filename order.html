@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Bakes - Order</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #fff7ed;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    }
+
+    h1 {
+      text-align: center;
+      color: #7b3f00;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
+      border: none;
+      border-radius: 8px;
+      background: #7b3f00;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #a05220;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      color: #7b3f00;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🍰 Smart Bakes</h1>
+
+    <form id="orderForm">
+
+      <label>Customer Name</label>
+      <input
+        type="text"
+        id="name"
+        placeholder="Enter your name"
+        required
+      >
+
+      <label>Phone Number</label>
+      <input
+        type="tel"
+        id="phone"
+        placeholder="Enter your phone number"
+        required
+      >
+
+      <label>Select Cake / Item</label>
+      <select id="item" required>
+        <option value="">Select an item</option>
+        <option value="Premium Cake">Premium Cake - ₹500</option>
+        <option value="Black Forest Cake">Black Forest Cake - ₹600</option>
+        <option value="Red Velvet Cake">Red Velvet Cake - ₹650</option>
+        <option value="Brownie">Brownie - ₹150</option>
+        <option value="Cookies">Cookies - ₹100</option>
+        <option value="Puffs">Puffs - ₹40</option>
+      </select>
+
+      <label>Quantity</label>
+      <input
+        type="number"
+        id="quantity"
+        min="1"
+        value="1"
+        required
+      >
+
+      <label>Delivery Address</label>
+      <textarea
+        id="address"
+        rows="4"
+        placeholder="Enter your delivery address"
+        required
+      ></textarea>
+
+      <button type="submit">
+        Place Order 📲
+      </button>
+
+    </form>
+
+    <a href="index.html" class="back">
+      ← Back to Home
+    </a>
+
+  </div>
+
+  <script>
+    document.getElementById("orderForm").addEventListener("submit", function(event) {
+
+      event.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const phone = document.getElementById("phone").value;
+      const item = document.getElementById("item").value;
+      const quantity = document.getElementById("quantity").value;
+      const address = document.getElementById("address").value;
+
+      // CHANGE THIS TO YOUR BAKERY WHATSAPP NUMBER
+      const bakeryNumber = "919876543210";
+
+      const message =
+        "🍰 NEW ORDER - SMART BAKES\n\n" +
+        "👤 Customer: " + name + "\n" +
+        "📞 Phone: " + phone + "\n" +
+        "🍰 Item: " + item + "\n" +
+        "🔢 Quantity: " + quantity + "\n" +
+        "📍 Address: " + address;
+
+      const whatsappURL =
+        "https://wa.me/" +
+        bakeryNumber +
+        "?text=" +
+        encodeURIComponent(message);
+
+      window.open(whatsappURL, "_blank");
+
+    });
+  </script>
+
+</body>
+</html>
