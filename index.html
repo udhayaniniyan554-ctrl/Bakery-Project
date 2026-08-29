@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Bakes</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- LOGIN PAGE -->
+    <section id="loginPage" class="login-page">
+
+        <div class="login-image">
+            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1200&q=90">
+
+            <div class="image-text">
+                <p>SMART BAKES • PREMIUM BAKERY</p>
+
+                <h1>
+                    A little sweetness
+                    <br>
+                    <i>in every bite.</i>
+                </h1>
+
+                <span>
+                    Freshly baked. Carefully crafted. Made with love.
+                </span>
+            </div>
+        </div>
+
+
+        <div class="login-box">
+
+            <div class="brand-icon">✦</div>
+
+            <h2>Smart Bakes</h2>
+
+            <p class="premium-text">
+                PREMIUM BAKERY EXPERIENCE
+            </p>
+
+            <div class="welcome">
+
+                <h1>Welcome Back</h1>
+
+                <p>
+                    Sign in to continue your delicious journey.
+                </p>
+
+            </div>
+
+
+            <form id="loginForm">
+
+                <label>Email Address</label>
+
+                <input
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+
+                <button type="submit" class="dark-btn">
+                    Sign In →
+                </button>
+
+            </form>
+
+
+            <div class="or">
+                OR
+            </div>
+
+
+            <button
+                class="guest-btn"
+                onclick="continueAsGuest()"
+            >
+                Continue as Guest
+            </button>
+
+
+            <p class="signup">
+                New to Smart Bakes?
+                <b>Create an account</b>
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- SHOP PAGE -->
+    <section id="shopPage" class="shop-page">
+
+        <!-- NAVBAR -->
+
+        <header class="navbar">
+
+            <div class="logo">
+
+                <div class="logo-icon">
+                    ✦
+                </div>
+
+                <div>
+                    <h2>Smart Bakes</h2>
+                    <small>PREMIUM BAKERY</small>
+                </div>
+
+            </div>
+
+
+            <nav>
+                <a href="#">Home</a>
+                <a href="#menu">Menu</a>
+                <a href="#footer">About</a>
+            </nav>
+
+
+            <button
+                class="cart-btn"
+                onclick="openCart()"
+            >
+                🛒
+                <span id="cartCount">0</span>
+            </button>
+
+        </header>
+
+
+
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p>WELCOME TO SMART BAKES</p>
+
+                <h1>
+                    Freshly Baked.
+                    <br>
+                    <i>Made for You.</i>
+                </h1>
+
+                <span>
+                    Premium cakes, buns, snacks and refreshing drinks
+                    made fresh for every special moment.
+                </span>
+
+
+                <button onclick="goToMenu()">
+                    Explore Menu ↓
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- MENU -->
+
+        <section
+            class="menu"
+            id="menu"
+        >
+
+            <div class="menu-title">
+
+                <div>
+
+                    <p>OUR MENU</p>
+
+                    <h1>
+                        Today's Fresh Picks
+                    </h1>
+
+                </div>
+
+
+                <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="🔍 Search products..."
+                    onkeyup="searchProducts()"
+                >
+
+            </div>
+
+
+            <div
+                id="productsGrid"
+                class="products-grid"
+            >
+
+            </div>
+
+        </section>
+
+
+
+        <!-- CART -->
+
+        <div
+            id="cartOverlay"
+            class="cart-overlay"
+            onclick="closeCart()"
+        >
+
+            <div
+                class="cart-box"
+                onclick="event.stopPropagation()"
+            >
+
+                <div class="cart-header">
+
+                    <div>
+
+                        <p>YOUR ORDER</p>
+
+                        <h2>
+                            Shopping Cart
+                        </h2>
+
+                    </div>
+
+
+                    <button onclick="closeCart()">
+                        ✕
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="cartItems"
+                    class="cart-items"
+                >
+                </div>
+
+
+                <div class="cart-footer">
+
+                    <div>
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong id="cartTotal">
+                            ₹0
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        class="checkout-btn"
+                        onclick="checkout()"
+                    >
+                        Proceed to Checkout →
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- CHECKOUT PAGE -->
+    <!-- IMPORTANT: outside shopPage -->
+
+    <section
+        id="checkoutPage"
+        class="checkout-page"
+    >
+
+        <div class="checkout-container">
+
+            <button
+                class="back-btn"
+                onclick="backToShop()"
+            >
+                ← Back to Menu
+            </button>
+
+
+            <div class="page-heading">
+
+                <p>SMART BAKES</p>
+
+                <h1>
+                    Checkout
+                </h1>
+
+                <span>
+                    Complete your order
+                </span>
+
+            </div>
+
+
+            <div class="checkout-grid">
+
+
+                <!-- CUSTOMER -->
+
+                <div class="details-card">
+
+                    <h2>
+                        Customer Details
+                    </h2>
+
+                    <p>
+                        Enter your delivery information
+                    </p>
+
+
+                    <label>
+                        Full Name
+                    </label>
+
+                    <input
+                        id="customerName"
+                        type="text"
+                        placeholder="Enter your name"
+                    >
+
+
+                    <label>
+                        Mobile Number
+                    </label>
+
+                    <input
+                        id="customerPhone"
+                        type="tel"
+                        maxlength="10"
+                        placeholder="Enter 10 digit mobile number"
+                    >
+
+
+                    <label>
+                        Delivery Address
+                    </label>
+
+                    <textarea
+                        id="customerAddress"
+                        placeholder="Enter your complete address"
+                    ></textarea>
+
+
+                    <label>
+                        Order Note
+                        <small>(Optional)</small>
+                    </label>
+
+                    <textarea
+                        id="orderNote"
+                        placeholder="Any special request?"
+                    ></textarea>
+
+
+                    <button
+                        class="dark-btn"
+                        onclick="goToPayment()"
+                    >
+                        Continue to Payment →
+                    </button>
+
+                </div>
+
+
+
+                <!-- SUMMARY -->
+
+                <div class="summary-card">
+
+                    <h2>
+                        Your Order
+                    </h2>
+
+
+                    <div id="checkoutItems"></div>
+
+
+                    <div class="summary-row">
+
+                        <span>
+                            Subtotal
+                        </span>
+
+                        <strong id="checkoutSubtotal">
+                            ₹0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-row">
+
+                        <span>
+                            Delivery
+                        </span>
+
+                        <strong>
+                            ₹30
+                        </strong>
+
+                    </div>
+
+
+                    <div class="total-row">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong id="checkoutTotal">
+                            ₹30
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- PAYMENT PAGE -->
+
+    <section
+        id="paymentPage"
+        class="payment-page"
+    >
+
+        <div class="payment-container">
+
+            <button
+                class="back-btn"
+                onclick="backToCheckout()"
+            >
+                ← Back
+            </button>
+
+
+            <div class="page-heading">
+
+                <p>SMART BAKES</p>
+
+                <h1>
+                    Make Payment
+                </h1>
+
+                <span>
+                    Complete your payment securely
+                </span>
+
+            </div>
+
+
+            <div class="payment-grid">
+
+
+                <div class="qr-card">
+
+                    <h2>
+                        Scan & Pay
+                    </h2>
+
+                    <p>
+                        Scan the QR using any UPI app
+                    </p>
+
+
+                    <div class="qr">
+
+                        <div class="qr-center">
+                            SB
+                        </div>
+
+                    </div>
+
+
+                    <small>
+                        UPI ID
+                    </small>
+
+                    <strong>
+                        smartbakes@upi
+                    </strong>
+
+                </div>
+
+
+
+                <div class="summary-card">
+
+                    <h2>
+                        Order Summary
+                    </h2>
+
+
+                    <div id="paymentItems"></div>
+
+
+                    <div class="total-row">
+
+                        <span>
+                            Payable Amount
+                        </span>
+
+                        <strong id="paymentTotal">
+                            ₹0
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        class="dark-btn"
+                        onclick="paymentCompleted()"
+                    >
+                        ✓ I Have Completed Payment
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- SUCCESS PAGE -->
+
+    <section
+        id="successPage"
+        class="success-page"
+    >
+
+        <div class="success-card">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+
+            <p>
+                SMART BAKES
+            </p>
+
+
+            <h1>
+                Order Placed!
+            </h1>
+
+
+            <span>
+                Thank you for ordering with us.
+            </span>
+
+
+            <div
+                id="successDetails"
+                class="success-details"
+            >
+            </div>
+
+
+            <button
+                class="dark-btn"
+                onclick="backToShop()"
+            >
+                Continue Shopping →
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- FOOTER -->
+
+    <footer id="footer">
+
+        <h2>
+            ✦ Smart Bakes
+        </h2>
+
+        <p>
+            Freshness you can taste. Happiness you can share.
+        </p>
+
+        <small>
+            © 2026 Smart Bakes
+        </small>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
