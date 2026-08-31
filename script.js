@@ -1,5 +1,7 @@
-/* ================= PRODUCT DATA ================= */
-const products = [
+/* ================================================================= */
+/* ==================== INITIAL PRODUCTS CATALOG =================== */
+/* ================================================================= */
+const defaultProducts = [
     {
         id: 1,
         name: "Artisan Chocolates (Box)",
@@ -58,1133 +60,674 @@ const products = [
         image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=900&q=90",
         description: "Oven-fresh bun stuffed with sweet grated coconut and cardamom.",
         isVeg: true,
-        rating: "4.8 ★ (95+)"
+        rating: "4.8 ★ (90+)"
     },
     {
         id: 7,
         name: "Chilled Pepsi (Can)",
         category: "drinks",
-        price: 15,
+        price: 35,
         image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=900&q=90",
         description: "Refreshing cold carbonated beverage to complement your snacks.",
         isVeg: true,
-        rating: "4.6 ★ (40+)"
+        rating: "4.9 ★ (400+)"
     },
     {
         id: 8,
-        name: "Spiced Chicken Roll",
+        name: "Crispy Samosa (2 Pcs)",
         category: "snacks",
         price: 25,
-        image: "https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=900&q=90",
-        description: "Succulent spiced chicken wrapped in soft freshly baked roll.",
-        isVeg: false,
-        rating: "4.9 ★ (310+)"
-    },
-    {
-        id: 9,
-        name: "Hot Chilli Bread Snack",
-        category: "snacks",
-        price: 20,
         image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=90",
-        description: "Crispy seasoned bread cubes tossed in tangy spicy chilli sauce.",
+        description: "Crispy golden crust filled with spiced potatoes and green peas.",
         isVeg: true,
-        rating: "4.7 ★ (140+)"
-    },
-    {
-        id: 10,
-        name: "Royal Ice Cube Cake",
-        category: "cakes",
-        price: 500,
-        image: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=900&q=90",
-        description: "Premium cool ice-frosting gateau with layered cream and berries.",
-        isVeg: true,
-        rating: "5.0 ★ (180+)"
+        rating: "4.9 ★ (150+)"
     }
 ];
 
-/* ================= STATE ================= */
 let cart = [];
-let appliedCoupon = null; // { code: 'SWEET10', percent: 10 } or { code: 'FIRST50', flat: 50 }
-let currentCategory = 'all';
-let selectedPayment = 'upi';
-let latestOrder = null;
+let appliedCoupon = null;
+let currentPaymentMethod = "upi";
+let currentOrder = null;
+let currentStoreCategory = "all";
+let currentKitchenFilter = "all";
 
-// UPI Configuration
-const UPI_CONFIG = {
-    payeeName: "Muthukrishnan S",
-    upiId: "muthukrishnans2002@okhdfcbank",
-    bank: "Indian Bank (4189)",
-    bakeryWhatsApp: "919876543210" // Bakery Owner WhatsApp Number
-};
+/* ================================================================= */
+/* ===================== VIEW MANAGEMENT =========================== */
+/* ================================================================= */
+function showView(viewName) {
+    document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
+    document.getElementById("navBtnCustomer")?.classList.remove("active");
+    document.getElementById("navBtnShopkeeper")?.classList.remove("active");
 
-// Delivery constants
-const DELIVERY_FEE = 30;
-const FREE_DELIVERY_THRESHOLD = 499;
-
-/* ================= INITIALIZATION ================= */
-document.addEventListener("DOMContentLoaded", function () {
-    // Restore cart if saved
-    const savedCart = localStorage.getItem("smartbakes_cart");
-    if (savedCart) {
-        try {
-            cart = JSON.parse(savedCart);
-        } catch (e) {
-            cart = [];
-        }
+    if (viewName === "landing") {
+        document.getElementById("viewLanding")?.classList.add("active");
+    } else if (viewName === "customer") {
+        document.getElementById("viewCustomer")?.classList.add("active");
+        document.getElementById("navBtnCustomer")?.classList.add("active");
+        renderStoreProducts();
+    } else if (viewName === "checkout") {
+        document.getElementById("viewCheckout")?.classList.add("active");
+        renderCheckoutSummary();
+    } else if (viewName === "success") {
+        document.getElementById("viewSuccess")?.classList.add("active");
+    } else if (viewName === "shopkeeper") {
+        document.getElementById("viewShopkeeper")?.classList.add("active");
+        document.getElementById("navBtnShopkeeper")?.classList.add("active");
+        renderKitchenDashboard();
+        showToast("Kitchen Dashboard Loaded 🏪", "info");
     }
-
-    // Check login form
-    const loginForm = document.getElementById("loginForm");
-    if (loginForm) {
-        loginForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-            const email = document.getElementById("loginEmail").value;
-            localStorage.setItem("smartbakes_user", email);
-            showToast("Welcome back to Smart Bakes!", "success", "👋");
-            openShop();
-        });
-    }
-
-    // Pre-fill customer details if saved
-    const savedName = localStorage.getItem("smartbakes_cust_name");
-    const savedPhone = localStorage.getItem("smartbakes_cust_phone");
-    const savedAddress = localStorage.getItem("smartbakes_cust_address");
-    if (savedName && document.getElementById("customerName")) document.getElementById("customerName").value = savedName;
-    if (savedPhone && document.getElementById("customerPhone")) document.getElementById("customerPhone").value = savedPhone;
-    if (savedAddress && document.getElementById("customerAddress")) document.getElementById("customerAddress").value = savedAddress;
-
-    updateOrdersBadge();
-});
-
-/* ================= TOAST NOTIFICATION SYSTEM ================= */
-function showToast(message, type = "info", icon = "🍞", duration = 3500) {
-    const container = document.getElementById("toastContainer");
-    if (!container) return;
-
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <span class="toast-icon">${icon}</span>
-        <span class="toast-msg">${message}</span>
-        <button class="toast-close" onclick="this.parentElement.remove()" title="Close">✕</button>
-    `;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        if (toast.parentElement) {
-            toast.style.opacity = "0";
-            toast.style.transform = "translateX(100%)";
-            setTimeout(() => toast.remove(), 250);
-        }
-    }, duration);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* ================= NAVIGATION & AUTH ================= */
-function continueAsGuest() {
-    localStorage.setItem("smartbakes_user", "Guest User");
-    showToast("Continuing as Guest Shopper", "info", "🛍️");
-    openShop();
+/* ================================================================= */
+/* ===================== STORE CATALOG ENGINE ====================== */
+/* ================================================================= */
+function getAllProducts() {
+    let custom = [];
+    try {
+        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+    } catch (e) {}
+    return [...defaultProducts, ...custom];
 }
 
-function openShop() {
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("shopPage").style.display = "block";
-    document.getElementById("checkoutPage").style.display = "none";
-    document.getElementById("paymentPage").style.display = "none";
-    document.getElementById("successPage").style.display = "none";
-
-    displayProducts();
-    updateCartUI();
-    window.scrollTo(0, 0);
-}
-
-function logout() {
-    localStorage.removeItem("smartbakes_user");
-    document.getElementById("shopPage").style.display = "none";
-    document.getElementById("loginPage").style.display = "grid";
-    showToast("Signed out successfully", "info", "🚪");
-}
-
-function goToSection(sectionId) {
-    const el = document.getElementById(sectionId);
-    if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-    }
-}
-
-function goToMenu() {
-    goToSection("menu");
-}
-
-/* ================= CATEGORY FILTERING & SEARCH ================= */
-function filterCategory(category, btnElement) {
-    currentCategory = category;
-
-    // Update active button styling
-    const pills = document.querySelectorAll(".filter-pill");
-    pills.forEach(p => p.classList.remove("active"));
-    if (btnElement) btnElement.classList.add("active");
-
-    searchProducts();
-}
-
-function searchProducts() {
-    const searchVal = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
-
-    const filtered = products.filter(product => {
-        const matchesCategory = (currentCategory === 'all') || (product.category === currentCategory);
-        const matchesSearch = product.name.toLowerCase().includes(searchVal) ||
-                              product.description.toLowerCase().includes(searchVal);
-        return matchesCategory && matchesSearch;
-    });
-
-    displayProducts(filtered);
-}
-
-/* ================= PRODUCT RENDERING ================= */
-function displayProducts(list = products) {
-    const grid = document.getElementById("productsGrid");
+function renderStoreProducts() {
+    const grid = document.getElementById("storeProductsGrid");
     if (!grid) return;
 
-    grid.innerHTML = "";
+    const allProds = getAllProducts();
+    let stockStatus = {};
+    try {
+        stockStatus = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+    } catch (e) {}
 
-    if (list.length === 0) {
+    let query = document.getElementById("storeSearchInput")?.value.toLowerCase().trim() || "";
+
+    let filtered = allProds.filter(p => {
+        const matchesCat = currentStoreCategory === "all" || p.category === currentStoreCategory;
+        const matchesQuery = p.name.toLowerCase().includes(query) || (p.description && p.description.toLowerCase().includes(query));
+        return matchesCat && matchesQuery;
+    });
+
+    grid.innerHTML = "";
+    if (filtered.length === 0) {
         grid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: white; border-radius: 16px; border: 1px solid var(--border-color);">
-                <span style="font-size: 40px;">🔍</span>
-                <h3 style="margin-top: 10px; color: var(--primary);">No items found</h3>
-                <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Try searching for another keyword or browse our full menu!</p>
-                <button class="filter-pill active" style="margin-top: 16px;" onclick="filterCategory('all', document.querySelector('.filter-pill'))">View All Menu</button>
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">🔍</span>
+                <h3>No bakery items found</h3>
+                <p style="color: var(--text-muted); font-size: 13px;">Try searching for another keyword or change category.</p>
             </div>
         `;
         return;
     }
 
-    list.forEach(product => {
-        const existing = cart.find(item => item.name === product.name);
-        const quantity = existing ? existing.quantity : 0;
+    filtered.forEach(product => {
+        const isOutOfStock = stockStatus[product.id] === false;
+        const cartItem = cart.find(i => i.id === product.id);
 
-        let actionButton;
-        if (quantity === 0) {
-            actionButton = `
-                <button class="add-btn" onclick="addToCart('${product.name}')">
-                    + Add to Cart
-                </button>
-            `;
-        } else {
-            actionButton = `
-                <div class="quantity-box">
-                    <button onclick="decreaseQuantity('${product.name}')">−</button>
-                    <span>${quantity}</span>
-                    <button onclick="increaseQuantity('${product.name}')">+</button>
+        let buttonHtml = "";
+        if (isOutOfStock) {
+            buttonHtml = `<button class="add-cart-btn" disabled style="background:#cbd5e0; cursor:not-allowed;">Sold Out</button>`;
+        } else if (cartItem) {
+            buttonHtml = `
+                <div class="quantity-stepper">
+                    <button onclick="updateCartQuantity(${product.id}, -1)">−</button>
+                    <span>${cartItem.quantity}</span>
+                    <button onclick="updateCartQuantity(${product.id}, 1)">+</button>
                 </div>
             `;
+        } else {
+            buttonHtml = `<button class="add-cart-btn" onclick="addToCart(${product.id})">+ Add to Cart</button>`;
         }
-
-        const dietBadge = product.isVeg
-            ? `<div class="diet-badge" title="Pure Vegetarian"><div class="diet-dot"></div></div>`
-            : `<div class="diet-badge nonveg" title="Non-Vegetarian"><div class="diet-dot"></div></div>`;
 
         grid.innerHTML += `
             <div class="product-card">
-                <div class="product-image">
-                    <img
-                        src="${product.image}"
-                        alt="${product.name}"
-                        loading="lazy"
-                        onerror="this.src='https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=900&q=90'"
-                    >
-                    ${dietBadge}
-                    <div class="price-tag">₹${product.price}</div>
+                <div class="product-image-container">
+                    <img src="${product.image}" alt="${product.name}" loading="lazy">
+                    <span class="diet-pill">${product.isVeg ? "🟢 Pure Veg" : "🔴 Non-Veg"}</span>
+                    ${isOutOfStock ? `<div class="out-of-stock-overlay">OUT OF STOCK</div>` : ""}
                 </div>
-
-                <div class="product-info">
-                    <div class="product-info-top">
-                        <h3>${product.name}</h3>
-                        <span class="rating-badge">${product.rating}</span>
+                <div class="product-body">
+                    <div>
+                        <h3 class="product-title">${product.name}</h3>
+                        <p class="product-desc">${product.description || ""}</p>
                     </div>
-                    <p>${product.description}</p>
-                    ${actionButton}
+                    <div class="product-bottom-row">
+                        <span class="product-price">₹${product.price}</span>
+                        ${buttonHtml}
+                    </div>
                 </div>
             </div>
         `;
     });
 }
 
-/* ================= CART ACTIONS ================= */
-function addToCart(name) {
-    const product = products.find(item => item.name === name);
+function filterStoreCategory(cat, btn) {
+    currentStoreCategory = cat;
+    document.querySelectorAll(".category-pill").forEach(p => p.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    renderStoreProducts();
+}
+
+function handleStoreSearch() {
+    renderStoreProducts();
+}
+
+/* ================================================================= */
+/* ===================== CART DRAWER MANAGEMENT ==================== */
+/* ================================================================= */
+function addToCart(productId) {
+    const product = getAllProducts().find(p => p.id === productId);
     if (!product) return;
 
-    const existing = cart.find(item => item.name === name);
+    const existing = cart.find(i => i.id === productId);
     if (existing) {
-        existing.quantity++;
+        existing.quantity += 1;
     } else {
-        cart.push({
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            quantity: 1
-        });
+        cart.push({ ...product, quantity: 1 });
     }
 
-    saveCart();
     updateCartUI();
-    displayProducts();
-    showToast(`Added <strong>${product.name}</strong> to cart!`, "success", "🛒");
+    showToast(`Added ${product.name} to Basket 🛍️`, "success");
 }
 
-function increaseQuantity(name) {
-    const item = cart.find(product => product.name === name);
-    if (item) {
-        item.quantity++;
-        saveCart();
-        updateCartUI();
-        displayProducts();
+function updateCartQuantity(productId, delta) {
+    const idx = cart.findIndex(i => i.id === productId);
+    if (idx > -1) {
+        cart[idx].quantity += delta;
+        if (cart[idx].quantity <= 0) {
+            cart.splice(idx, 1);
+        }
     }
-}
-
-function decreaseQuantity(name) {
-    const item = cart.find(product => product.name === name);
-    if (!item) return;
-
-    item.quantity--;
-    if (item.quantity <= 0) {
-        cart = cart.filter(product => product.name !== name);
-        showToast(`Removed <strong>${name}</strong> from cart`, "info", "🗑️");
-    }
-
-    saveCart();
     updateCartUI();
-    displayProducts();
-}
-
-function saveCart() {
-    localStorage.setItem("smartbakes_cart", JSON.stringify(cart));
-}
-
-/* ================= CART UI & BILL CALCULATION ================= */
-function calculateSubtotal() {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-}
-
-function calculateDiscount(subtotal) {
-    if (!appliedCoupon) return 0;
-    if (appliedCoupon.percent) {
-        return Math.round((subtotal * appliedCoupon.percent) / 100);
-    }
-    if (appliedCoupon.flat) {
-        return Math.min(appliedCoupon.flat, subtotal);
-    }
-    return 0;
 }
 
 function updateCartUI() {
-    let count = 0;
-    cart.forEach(item => count += item.quantity);
+    const totalCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 
-    const cartCountEl = document.getElementById("cartCount");
-    if (cartCountEl) cartCountEl.textContent = count;
+    const countBadge = document.getElementById("cartCountBadge");
+    if (countBadge) countBadge.textContent = totalCount;
 
-    const subtotal = calculateSubtotal();
-    const discount = calculateDiscount(subtotal);
-    const total = Math.max(0, subtotal - discount);
-
-    // Update Cart Subtotal & Total
-    const subtotalEl = document.getElementById("cartSubtotal");
-    const totalEl = document.getElementById("cartTotal");
-    if (subtotalEl) subtotalEl.textContent = "₹" + subtotal;
-    if (totalEl) totalEl.textContent = "₹" + total;
-
-    // Discount row
-    const discountRow = document.getElementById("cartDiscountRow");
-    const discountAmountEl = document.getElementById("cartDiscountAmount");
-    const couponCodeBadge = document.getElementById("couponCodeBadge");
-    if (discountRow) {
-        if (discount > 0 && appliedCoupon) {
-            discountRow.style.display = "flex";
-            discountAmountEl.textContent = "-₹" + discount;
-            couponCodeBadge.textContent = `(${appliedCoupon.code})`;
+    // Free delivery calculation
+    const threshold = 499;
+    const progressEl = document.getElementById("drawerFreeDeliveryProgress");
+    const progressText = document.getElementById("drawerFreeDeliveryText");
+    if (progressEl && progressText) {
+        if (subtotal >= threshold) {
+            progressEl.style.width = "100%";
+            progressText.innerHTML = "🎉 Congratulations! You unlocked <strong>FREE Delivery!</strong>";
         } else {
-            discountRow.style.display = "none";
+            const diff = threshold - subtotal;
+            const pct = Math.min(100, Math.round((subtotal / threshold) * 100));
+            progressEl.style.width = `${pct}%`;
+            progressText.innerHTML = `Add ₹${diff} more for <strong>FREE Delivery!</strong>`;
         }
     }
 
-    // Free delivery progress
-    const progressFill = document.getElementById("freeDeliveryProgress");
-    const progressText = document.getElementById("freeDeliveryText");
-    if (progressFill && progressText) {
-        if (subtotal >= FREE_DELIVERY_THRESHOLD) {
-            progressFill.style.width = "100%";
-            progressText.innerHTML = `🎉 <strong>Congratulations!</strong> You unlocked FREE Delivery!`;
+    // Render items list inside drawer
+    const drawerList = document.getElementById("cartDrawerItems");
+    if (drawerList) {
+        if (cart.length === 0) {
+            drawerList.innerHTML = `
+                <div style="text-align:center; padding: 40px 10px; color: var(--text-muted);">
+                    <span style="font-size: 40px; display: block; margin-bottom: 8px;">🛒</span>
+                    <strong>Your basket is empty</strong>
+                    <p style="font-size: 12px; margin-top: 4px;">Explore our bakery menu and add delicious treats!</p>
+                </div>
+            `;
         } else {
-            const needed = FREE_DELIVERY_THRESHOLD - subtotal;
-            const pct = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
-            progressFill.style.width = `${pct}%`;
-            progressText.innerHTML = `Add ₹${needed} more for <strong>Free Delivery!</strong>`;
+            drawerList.innerHTML = cart.map(item => `
+                <div class="cart-item-row">
+                    <img src="${item.image}" class="cart-item-img" alt="${item.name}">
+                    <div class="cart-item-info">
+                        <strong>${item.name}</strong>
+                        <small>₹${item.price} each</small>
+                    </div>
+                    <div class="quantity-stepper">
+                        <button onclick="updateCartQuantity(${item.id}, -1)">−</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateCartQuantity(${item.id}, 1)">+</button>
+                    </div>
+                    <strong>₹${item.price * item.quantity}</strong>
+                </div>
+            `).join("");
         }
     }
 
-    // Cart Items rendering
-    const cartItems = document.getElementById("cartItems");
-    if (!cartItems) return;
-
-    cartItems.innerHTML = "";
-    if (cart.length === 0) {
-        cartItems.innerHTML = `
-            <div style="text-align:center; padding: 45px 15px; color: var(--text-muted);">
-                <span style="font-size: 48px; display:block; margin-bottom:10px;">🧺</span>
-                <strong>Your cart is currently empty</strong>
-                <p style="font-size: 12px; margin-top: 5px;">Add delicious treats from our menu to begin!</p>
-            </div>
-        `;
-        return;
+    // Coupon and grand total
+    let discount = 0;
+    if (appliedCoupon === "SWEET10") {
+        discount = Math.round(subtotal * 0.10);
+    } else if (appliedCoupon === "BAKE50") {
+        discount = subtotal > 100 ? 50 : 0;
     }
 
-    cart.forEach(item => {
-        cartItems.innerHTML += `
-            <div class="cart-item">
-                <div>
-                    <strong>${item.name}</strong>
-                    <br>
-                    <small>₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}</small>
-                </div>
-                <div class="cart-quantity">
-                    <button onclick="decreaseQuantity('${item.name}')">−</button>
-                    <span>${item.quantity}</span>
-                    <button onclick="increaseQuantity('${item.name}')">+</button>
-                </div>
-            </div>
-        `;
-    });
+    const grandTotal = Math.max(0, subtotal - discount);
+
+    const subEl = document.getElementById("drawerSubtotal");
+    const discRow = document.getElementById("drawerDiscountRow");
+    const discEl = document.getElementById("drawerDiscount");
+    const totEl = document.getElementById("drawerGrandTotal");
+
+    if (subEl) subEl.textContent = `₹${subtotal}`;
+    if (totEl) totEl.textContent = `₹${grandTotal}`;
+    if (discRow && discEl) {
+        if (discount > 0) {
+            discRow.style.display = "flex";
+            discEl.textContent = `-₹${discount}`;
+        } else {
+            discRow.style.display = "none";
+        }
+    }
+
+    renderStoreProducts();
 }
 
-function openCart() {
+function openCartDrawer() {
     updateCartUI();
-    document.getElementById("cartOverlay").style.display = "block";
+    const drawer = document.getElementById("cartDrawerOverlay");
+    if (drawer) drawer.style.display = "flex";
 }
 
-function closeCart() {
-    document.getElementById("cartOverlay").style.display = "none";
+function closeCartDrawer() {
+    const drawer = document.getElementById("cartDrawerOverlay");
+    if (drawer) drawer.style.display = "none";
 }
 
-/* ================= COUPON CODES ================= */
-function applyCoupon() {
-    const input = document.getElementById("cartCouponInput");
-    const message = document.getElementById("couponMessage");
-    if (!input || !message) return;
+function applyStoreCoupon() {
+    const input = document.getElementById("drawerCouponInput");
+    const msg = document.getElementById("drawerCouponMsg");
+    if (!input || !msg) return;
 
     const code = input.value.trim().toUpperCase();
-
-    if (!code) {
-        message.className = "coupon-feedback error";
-        message.textContent = "Please enter a valid coupon code.";
-        return;
-    }
-
-    const subtotal = calculateSubtotal();
-    if (subtotal === 0) {
-        message.className = "coupon-feedback error";
-        message.textContent = "Add items to your cart before applying a coupon.";
-        return;
-    }
-
     if (code === "SWEET10") {
-        appliedCoupon = { code: "SWEET10", percent: 10 };
-        message.className = "coupon-feedback success";
-        message.textContent = "🎉 SWEET10 Applied! 10% Discount saved.";
-        showToast("Coupon SWEET10 applied for 10% OFF!", "success", "🏷️");
-    } else if (code === "FIRST50" || code === "BAKE50") {
-        if (subtotal < 150) {
-            message.className = "coupon-feedback error";
-            message.textContent = "Coupon requires minimum cart order of ₹150.";
-            return;
-        }
-        appliedCoupon = { code: code, flat: 50 };
-        message.className = "coupon-feedback success";
-        message.textContent = "🎉 ₹50 Flat Discount Applied!";
-        showToast(`Coupon ${code} applied for ₹50 OFF!`, "success", "🏷️");
+        appliedCoupon = "SWEET10";
+        msg.style.color = "#2f855a";
+        msg.textContent = "✓ 'SWEET10' applied: 10% Discount!";
+        showToast("Coupon SWEET10 applied!", "success");
+    } else if (code === "BAKE50") {
+        appliedCoupon = "BAKE50";
+        msg.style.color = "#2f855a";
+        msg.textContent = "✓ 'BAKE50' applied: ₹50 Discount!";
+        showToast("Coupon BAKE50 applied!", "success");
     } else {
-        message.className = "coupon-feedback error";
-        message.textContent = "Invalid coupon code. Try SWEET10 or FIRST50.";
-        showToast("Invalid coupon code entered", "warning", "⚠️");
-        return;
+        appliedCoupon = null;
+        msg.style.color = "#e53e3e";
+        msg.textContent = "❌ Invalid coupon code. Try SWEET10";
     }
-
     updateCartUI();
 }
 
-/* ================= CHECKOUT FLOW ================= */
-function checkout() {
+function proceedToCheckoutFromDrawer() {
     if (cart.length === 0) {
-        showToast("Your cart is empty! Add items before checkout.", "warning", "🛒");
+        showToast("Your cart is empty! Please add items first.", "error");
         return;
     }
-
-    closeCart();
-
-    document.getElementById("shopPage").style.display = "none";
-    document.getElementById("checkoutPage").style.display = "block";
-    document.getElementById("paymentPage").style.display = "none";
-    document.getElementById("successPage").style.display = "none";
-
-    displayCheckout();
-    window.scrollTo(0, 0);
+    closeCartDrawer();
+    showView("checkout");
 }
 
-function displayCheckout() {
-    const box = document.getElementById("checkoutItems");
-    if (!box) return;
+/* ================================================================= */
+/* ===================== CHECKOUT & PAYMENT ======================== */
+/* ================================================================= */
+function renderCheckoutSummary() {
+    const itemsList = document.getElementById("chkItemsList");
+    if (!itemsList) return;
 
-    box.innerHTML = "";
-    const subtotal = calculateSubtotal();
-    const discount = calculateDiscount(subtotal);
-    const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const finalTotal = Math.max(0, subtotal - discount + deliveryFee);
+    itemsList.innerHTML = cart.map(item => `
+        <div class="summary-item-row">
+            <span>${item.name} × ${item.quantity}</span>
+            <strong>₹${item.price * item.quantity}</strong>
+        </div>
+    `).join("");
 
-    cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        box.innerHTML += `
-            <div class="checkout-item">
-                <span>${item.name} <b>× ${item.quantity}</b></span>
-                <strong>₹${itemTotal}</strong>
-            </div>
-        `;
-    });
+    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    let discount = 0;
+    if (appliedCoupon === "SWEET10") discount = Math.round(subtotal * 0.10);
+    if (appliedCoupon === "BAKE50") discount = subtotal > 100 ? 50 : 0;
 
-    document.getElementById("checkoutSubtotal").textContent = "₹" + subtotal;
+    const deliveryFee = subtotal >= 499 || subtotal === 0 ? 0 : 30;
+    const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
 
-    const discountRow = document.getElementById("checkoutDiscountRow");
-    if (discountRow) {
-        if (discount > 0) {
-            discountRow.style.display = "flex";
-            document.getElementById("checkoutDiscount").textContent = "-₹" + discount;
-        } else {
-            discountRow.style.display = "none";
-        }
+    document.getElementById("chkSubtotal").textContent = `₹${subtotal}`;
+    document.getElementById("chkDeliveryFee").textContent = deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`;
+    document.getElementById("chkGrandTotal").textContent = `₹${grandTotal}`;
+
+    const discRow = document.getElementById("chkDiscountRow");
+    const discEl = document.getElementById("chkDiscount");
+    if (discount > 0 && discRow && discEl) {
+        discRow.style.display = "flex";
+        discEl.textContent = `-₹${discount}`;
+    } else if (discRow) {
+        discRow.style.display = "none";
     }
-
-    document.getElementById("checkoutDeliveryFee").textContent = deliveryFee === 0 ? "FREE" : "₹" + deliveryFee;
-    document.getElementById("checkoutTotal").textContent = "₹" + finalTotal;
 }
 
-function goToPayment() {
-    const name = document.getElementById("customerName").value.trim();
-    const phone = document.getElementById("customerPhone").value.trim();
-    const address = document.getElementById("customerAddress").value.trim();
-
-    if (name === "") {
-        showToast("Please enter your full name for delivery.", "warning", "👤");
-        document.getElementById("customerName").focus();
-        return;
-    }
-
-    if (!/^[0-9]{10}$/.test(phone)) {
-        showToast("Please enter a valid 10-digit mobile number.", "warning", "📞");
-        document.getElementById("customerPhone").focus();
-        return;
-    }
-
-    if (address === "") {
-        showToast("Please enter your delivery address.", "warning", "📍");
-        document.getElementById("customerAddress").focus();
-        return;
-    }
-
-    // Save details to localStorage for convenience
-    localStorage.setItem("smartbakes_cust_name", name);
-    localStorage.setItem("smartbakes_cust_phone", phone);
-    localStorage.setItem("smartbakes_cust_address", address);
-
-    document.getElementById("checkoutPage").style.display = "none";
-    document.getElementById("paymentPage").style.display = "block";
-
-    displayPayment();
-    window.scrollTo(0, 0);
-}
-
-/* ================= PAYMENT OPTIONS & QR CODE ================= */
-function selectPaymentMethod(method) {
-    selectedPayment = method;
-
-    const tabUpi = document.getElementById("tabUpi");
-    const tabCod = document.getElementById("tabCod");
-    const upiSection = document.getElementById("upiPaymentSection");
-    const codSection = document.getElementById("codPaymentSection");
-    const confirmBtn = document.getElementById("confirmPaymentBtn");
+function setPaymentMethod(method) {
+    currentPaymentMethod = method;
+    const tabUpi = document.getElementById("payTabUpi");
+    const tabCod = document.getElementById("payTabCod");
+    const secUpi = document.getElementById("paySectionUpi");
+    const secCod = document.getElementById("paySectionCod");
 
     if (method === "upi") {
         tabUpi.classList.add("active");
         tabCod.classList.remove("active");
-        upiSection.style.display = "block";
-        codSection.style.display = "none";
-        confirmBtn.textContent = "✓ Confirm UPI Payment & Place Order";
+        secUpi.style.display = "block";
+        secCod.style.display = "none";
     } else {
         tabCod.classList.add("active");
         tabUpi.classList.remove("active");
-        upiSection.style.display = "none";
-        codSection.style.display = "block";
-        confirmBtn.textContent = "✓ Confirm Cash on Delivery Order";
+        secCod.style.display = "block";
+        secUpi.style.display = "none";
     }
 }
 
-function displayPayment() {
-    const box = document.getElementById("paymentItems");
-    if (!box) return;
-
-    box.innerHTML = "";
-    const subtotal = calculateSubtotal();
-    const discount = calculateDiscount(subtotal);
-    const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const payable = Math.max(0, subtotal - discount + deliveryFee);
-
-    cart.forEach(item => {
-        box.innerHTML += `
-            <div class="checkout-item">
-                <span>${item.name} × ${item.quantity}</span>
-                <strong>₹${item.price * item.quantity}</strong>
-            </div>
-        `;
+function copyUpiVpa() {
+    const upiId = document.getElementById("chkUpiId").textContent.trim();
+    navigator.clipboard.writeText(upiId).then(() => {
+        showToast("UPI ID Copied to Clipboard! 📋", "success");
     });
+}
 
-    document.getElementById("paymentSubtotal").textContent = "₹" + subtotal;
+function submitFinalOrder() {
+    const name = document.getElementById("chkName").value.trim();
+    const phone = document.getElementById("chkPhone").value.trim();
+    const address = document.getElementById("chkAddress").value.trim();
+    const slot = document.getElementById("chkSlot").value;
+    const note = document.getElementById("chkNote").value.trim();
+    const utr = document.getElementById("chkUtr")?.value.trim() || "";
 
-    const discountRow = document.getElementById("paymentDiscountRow");
-    if (discountRow) {
-        if (discount > 0) {
-            discountRow.style.display = "flex";
-            document.getElementById("paymentDiscount").textContent = "-₹" + discount;
-        } else {
-            discountRow.style.display = "none";
-        }
+    if (!name || !phone || !address) {
+        showToast("Please fill in Name, Phone & Delivery Address!", "error");
+        return;
+    }
+    if (phone.length < 10) {
+        showToast("Please enter a valid 10-digit mobile number!", "error");
+        return;
     }
 
-    document.getElementById("paymentDeliveryFee").textContent = deliveryFee === 0 ? "FREE" : "₹" + deliveryFee;
-    document.getElementById("paymentTotal").textContent = "₹" + payable;
+    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    let discount = 0;
+    if (appliedCoupon === "SWEET10") discount = Math.round(subtotal * 0.10);
+    const deliveryFee = subtotal >= 499 ? 0 : 30;
+    const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
 
-    // Update UPI Direct App Deep Link with dynamically calculated total
-    const upiLink = document.getElementById("payViaUpiAppBtn");
-    if (upiLink) {
-        const upiUrl = `upi://pay?pa=${encodeURIComponent(UPI_CONFIG.upiId)}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${payable}&cu=INR&tn=SmartBakes_Bakery_Order`;
-        upiLink.href = upiUrl;
-    }
-}
-
-function copyUpiId() {
-    const upiId = UPI_CONFIG.upiId;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(upiId).then(() => {
-            showToast(`Copied UPI ID: <strong>${upiId}</strong>`, "success", "📋");
-        }).catch(() => {
-            fallbackCopy(upiId);
-        });
-    } else {
-        fallbackCopy(upiId);
-    }
-}
-
-function fallbackCopy(text) {
-    const tempInput = document.createElement("input");
-    tempInput.value = text;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand("copy");
-    document.body.removeChild(tempInput);
-    showToast(`Copied UPI ID: <strong>${text}</strong>`, "success", "📋");
-}
-
-function backToShop() {
-    document.getElementById("checkoutPage").style.display = "none";
-    document.getElementById("paymentPage").style.display = "none";
-    document.getElementById("successPage").style.display = "none";
-    document.getElementById("shopPage").style.display = "block";
-
-    displayProducts();
-    window.scrollTo(0, 0);
-}
-
-function backToCheckout() {
-    document.getElementById("paymentPage").style.display = "none";
-    document.getElementById("checkoutPage").style.display = "block";
-
-    displayCheckout();
-    window.scrollTo(0, 0);
-}
-
-/* ================= ORDER COMPLETION & INVOICE ================= */
-function paymentCompleted() {
-    const name = document.getElementById("customerName")?.value.trim() || "Valued Customer";
-    const phone = document.getElementById("customerPhone")?.value.trim() || "";
-    const address = document.getElementById("customerAddress")?.value.trim() || "";
-    const slot = document.getElementById("deliveryTimeSlot")?.value || "Standard";
-    const note = document.getElementById("orderNote")?.value.trim() || "";
-    const utr = document.getElementById("transactionUtr")?.value.trim() || "";
-
-    const subtotal = calculateSubtotal();
-    const discount = calculateDiscount(subtotal);
-    const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const finalTotal = Math.max(0, subtotal - discount + deliveryFee);
-
-    const orderId = "SB" + Math.floor(100000 + Math.random() * 900000);
-    const orderDate = new Date().toLocaleString("en-IN", {
-        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-    });
-
-    const orderItemsCopy = [...cart];
-
-    latestOrder = {
-        orderId,
-        date: orderDate,
+    const newOrder = {
+        orderId: "SB-" + Math.floor(100000 + Math.random() * 900000),
+        date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
         customerName: name,
-        phone,
-        address,
-        slot,
-        note,
-        paymentMethod: selectedPayment === 'upi' ? 'UPI / QR Scan' : 'Cash on Delivery (COD)',
-        utr: utr ? utr : (selectedPayment === 'upi' ? 'Self-Verified' : 'N/A'),
-        items: orderItemsCopy,
-        subtotal,
-        discount,
-        couponCode: appliedCoupon ? appliedCoupon.code : null,
-        deliveryFee,
-        total: finalTotal,
-        status: "Order Confirmed 🎂"
+        customerPhone: phone,
+        address: address,
+        slot: slot,
+        note: note,
+        utr: utr,
+        paymentMethod: currentPaymentMethod === "upi" ? "UPI / QR Code" : "Cash on Delivery",
+        items: [...cart],
+        subtotal: subtotal,
+        discount: discount,
+        deliveryFee: deliveryFee,
+        total: grandTotal,
+        status: "Pending"
     };
 
-    // Save to order history in localStorage
-    saveOrderToHistory(latestOrder);
+    currentOrder = newOrder;
 
-    // Display Success Screen
-    document.getElementById("paymentPage").style.display = "none";
-    document.getElementById("successPage").style.display = "flex";
+    // Save order
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {}
+    orders.unshift(newOrder);
+    localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
 
-    let itemsListHtml = orderItemsCopy.map(i => `• ${i.name} (Qty: ${i.quantity}) - ₹${i.price * i.quantity}`).join("<br>");
-
-    document.getElementById("successDetails").innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #ebdcd0; padding-bottom:8px;">
-            <strong>Order ID: #${orderId}</strong>
-            <span style="color:var(--text-muted); font-size:12px;">${orderDate}</span>
-        </div>
-        <strong>Customer:</strong> ${name} (${phone})<br>
-        <strong>Delivery To:</strong> ${address}<br>
-        <strong>Delivery Slot:</strong> ${slot}<br>
-        ${note ? `<strong>Instructions:</strong> <em>"${note}"</em><br>` : ""}
-        <div style="margin: 10px 0; padding: 8px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
-            <strong>Items Ordered:</strong><br>
-            ${itemsListHtml}
-        </div>
-        <strong>Payment Method:</strong> ${latestOrder.paymentMethod} ${utr ? `(Ref: ${utr})` : ""}<br>
-        ${discount > 0 ? `<strong>Coupon Discount:</strong> -₹${discount}<br>` : ""}
-        <strong style="font-size: 15px; color: var(--primary);">Total Paid / Payable: ₹${finalTotal}</strong>
-    `;
-
-    showToast(`Order #${orderId} confirmed successfully!`, "success", "🎉", 5000);
-
-    // Clear cart
+    // Reset cart
     cart = [];
     appliedCoupon = null;
-    saveCart();
     updateCartUI();
-    updateOrdersBadge();
-    window.scrollTo(0, 0);
+
+    // Render Success View
+    renderSuccessReceipt();
+    showView("success");
+    playOrderChimeSound();
+    updateCustomerBadges();
+    showToast("Order transmitted to Kitchen Dashboard! 🎂", "success");
 }
 
-/* ================= WHATSAPP ORDER DISPATCH ================= */
-function sendOrderToWhatsApp() {
-    if (!latestOrder) {
-        showToast("No active order details found.", "warning", "⚠️");
-        return;
+/* ================================================================= */
+/* ===================== SUCCESS & TICKET QR ======================= */
+/* ================================================================= */
+function renderSuccessReceipt() {
+    if (!currentOrder) return;
+
+    const body = document.getElementById("successInvoiceBody");
+    if (!body) return;
+
+    const itemsSummary = currentOrder.items.map(i => `
+        <div style="display:flex; justify-content:space-between; padding:3px 0;">
+            <span>${i.name} × ${i.quantity}</span>
+            <strong>₹${i.price * i.quantity}</strong>
+        </div>
+    `).join("");
+
+    body.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-weight:800; color:var(--primary); font-size:15px;">
+            <span>Order ID: #${currentOrder.orderId}</span>
+            <span>Mode: ${currentOrder.paymentMethod}</span>
+        </div>
+        <div style="margin-bottom:12px; color:var(--text-muted);">
+            <div>👤 <b>${currentOrder.customerName}</b> (${currentOrder.customerPhone})</div>
+            <div>📍 ${currentOrder.address}</div>
+            <div>🕒 Slot: ${currentOrder.slot}</div>
+            ${currentOrder.note ? `<div>📝 Note: <i>${currentOrder.note}</i></div>` : ""}
+            ${currentOrder.utr ? `<div>🔢 UTR Ref: <b>${currentOrder.utr}</b></div>` : ""}
+        </div>
+        <div style="border-top:1px dashed #ecd8cb; padding-top:10px; margin-bottom:10px;">
+            ${itemsSummary}
+        </div>
+        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px; color:var(--primary); border-top:1px solid #ecd8cb; padding-top:8px;">
+            <span>Total Paid Amount:</span>
+            <span>₹${currentOrder.total}</span>
+        </div>
+
+        <div class="ticket-qr-box">
+            <small style="display:block; font-weight:700; color:var(--text-muted); margin-bottom:6px;">OFFICIAL ORDER TICKET QR</small>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SMARTBAKES-ORDER-${currentOrder.orderId}-TOTAL-INR-${currentOrder.total}" alt="Ticket QR">
+            <small style="display:block; font-size:10px; color:#8c786c; margin-top:4px;">Scan at counter or delivery for instant order verification</small>
+        </div>
+    `;
+
+    updateTimelineState(currentOrder.status);
+}
+
+function updateTimelineState(status) {
+    const s1 = document.getElementById("trackStep1");
+    const s2 = document.getElementById("trackStep2");
+    const s3 = document.getElementById("trackStep3");
+    const s4 = document.getElementById("trackStep4");
+    const l1 = document.getElementById("trackLine1");
+    const l2 = document.getElementById("trackLine2");
+    const l3 = document.getElementById("trackLine3");
+
+    [s1, s2, s3, s4].forEach(s => s?.classList.remove("completed", "active"));
+    [l1, l2, l3].forEach(l => l?.classList.remove("completed"));
+
+    s1?.classList.add("completed");
+    if (status === "Pending") {
+        s1?.classList.add("completed");
+    } else if (status === "Baking") {
+        s1?.classList.add("completed");
+        l1?.classList.add("completed");
+        s2?.classList.add("active");
+    } else if (status === "Out for Delivery") {
+        s1?.classList.add("completed");
+        l1?.classList.add("completed");
+        s2?.classList.add("completed");
+        l2?.classList.add("completed");
+        s3?.classList.add("active");
+    } else if (status === "Delivered") {
+        s1?.classList.add("completed");
+        l1?.classList.add("completed");
+        s2?.classList.add("completed");
+        l2?.classList.add("completed");
+        s3?.classList.add("completed");
+        l3?.classList.add("completed");
+        s4?.classList.add("completed");
     }
-
-    const itemsText = latestOrder.items
-        .map(i => `  • ${i.name} x ${i.quantity} = ₹${i.price * i.quantity}`)
-        .join("\n");
-
-    const message =
-        `🍰 *NEW ORDER PLACED - SMART BAKES*\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `🆔 *Order ID:* #${latestOrder.orderId}\n` +
-        `📅 *Date:* ${latestOrder.date}\n\n` +
-        `👤 *Customer Name:* ${latestOrder.customerName}\n` +
-        `📞 *Phone:* ${latestOrder.phone}\n` +
-        `📍 *Delivery Address:* ${latestOrder.address}\n` +
-        `⏰ *Preferred Slot:* ${latestOrder.slot}\n` +
-        (latestOrder.note ? `📝 *Note:* ${latestOrder.note}\n` : "") +
-        `\n🛒 *ITEMS ORDERED:*\n${itemsText}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `💰 *Subtotal:* ₹${latestOrder.subtotal}\n` +
-        (latestOrder.discount > 0 ? `🏷️ *Coupon Discount:* -₹${latestOrder.discount}\n` : "") +
-        `🚚 *Delivery Fee:* ₹${latestOrder.deliveryFee}\n` +
-        `💳 *Total Amount:* ₹${latestOrder.total}\n` +
-        `💵 *Payment Mode:* ${latestOrder.paymentMethod}\n` +
-        (latestOrder.utr && latestOrder.utr !== 'N/A' ? `🔢 *UPI Ref/UTR:* ${latestOrder.utr}\n` : "") +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `✅ _Please confirm order preparation and dispatch!_`;
-
-    const whatsappUrl = `https://wa.me/${UPI_CONFIG.bakeryWhatsApp}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
-    showToast("Opening WhatsApp to send order dispatch...", "success", "💬");
 }
 
-/* ================= PRINT INVOICE / RECEIPT ================= */
-function printOrderReceipt() {
-    if (!latestOrder) {
-        showToast("No active order to print.", "warning", "🖨️");
-        return;
-    }
+function dispatchOrderToWhatsApp() {
+    if (!currentOrder) return;
+    const bakeryPhone = "919876543210";
+    const itemsText = currentOrder.items.map(i => `• ${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}`).join("%0A");
 
-    const printWindow = window.open("", "_blank", "width=600,height=750");
-    const itemsRows = latestOrder.items
-        .map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>₹${i.price}</td><td>₹${i.price * i.quantity}</td></tr>`)
-        .join("");
+    const message = `*🍰 SMART BAKES NEW ORDER — ${currentOrder.orderId}*%0A%0A` +
+        `*👤 Customer:* ${encodeURIComponent(currentOrder.customerName)}%0A` +
+        `*📞 Phone:* ${encodeURIComponent(currentOrder.customerPhone)}%0A` +
+        `*📍 Address:* ${encodeURIComponent(currentOrder.address)}%0A` +
+        `*🕒 Slot:* ${encodeURIComponent(currentOrder.slot)}%0A` +
+        (currentOrder.note ? `*📝 Note:* ${encodeURIComponent(currentOrder.note)}%0A` : ``) +
+        `*💳 Payment:* ${encodeURIComponent(currentOrder.paymentMethod)}` +
+        (currentOrder.utr ? ` (UTR: ${encodeURIComponent(currentOrder.utr)})` : ``) + `%0A%0A` +
+        `*🛒 Items Ordered:*%0A${itemsText}%0A%0A` +
+        `*💵 Grand Total:* ₹${currentOrder.total}%0A%0A` +
+        `_Please confirm delivery schedule!_`;
 
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Receipt - Order #${latestOrder.orderId}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 25px; color: #333; }
-                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 16px; }
-                .header h1 { margin: 0; color: #392218; font-size: 22px; }
-                .header p { margin: 4px 0; font-size: 12px; }
-                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
-                th { background: #f5eee8; }
-                .total-section { text-align: right; margin-top: 15px; font-size: 13px; line-height: 1.6; }
-                .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 10px; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>✦ SMART BAKES ✦</h1>
-                <p>Premium Bakery & Cafe</p>
-                <p>Order #${latestOrder.orderId} | Date: ${latestOrder.date}</p>
-            </div>
-            <div>
-                <strong>Customer:</strong> ${latestOrder.customerName} (${latestOrder.phone})<br>
-                <strong>Delivery Address:</strong> ${latestOrder.address}<br>
-                <strong>Slot:</strong> ${latestOrder.slot}<br>
-                <strong>Payment:</strong> ${latestOrder.paymentMethod}
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-                </thead>
-                <tbody>
-                    ${itemsRows}
-                </tbody>
-            </table>
-            <div class="total-section">
-                Subtotal: ₹${latestOrder.subtotal}<br>
-                ${latestOrder.discount > 0 ? `Discount: -₹${latestOrder.discount}<br>` : ""}
-                Delivery Fee: ₹${latestOrder.deliveryFee}<br>
-                <strong>Grand Total: ₹${latestOrder.total}</strong>
-            </div>
-            <div class="footer">
-                Thank you for choosing Smart Bakes! Handcrafted with love.
-            </div>
-            <script>
-                window.onload = function() { window.print(); }
-            </script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
+    window.open(`https://wa.me/${bakeryPhone}?text=${message}`, "_blank");
 }
 
-/* ================= MY ORDERS TRACKING MODAL ================= */
-function saveOrderToHistory(order) {
+function printReceiptTicket() {
+    window.print();
+}
+
+/* ================================================================= */
+/* ===================== SHOPKEEPER KITCHEN PORTAL ================= */
+/* ================================================================= */
+function renderKitchenDashboard() {
+    renderKitchenStats();
+    renderKitchenOrders();
+    renderKitchenMenuTable();
+}
+
+function renderKitchenStats() {
     let orders = [];
     try {
         orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-    } catch (e) {
-        orders = [];
-    }
-    // Ensure default status
-    order.status = order.status || "Pending";
-    orders.unshift(order);
-    localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
-    
-    // Play chime and update shopkeeper in real-time
-    playNewOrderChime();
-    updatePendingBadge();
-}
-
-function updateOrdersBadge() {
-    try {
-        const orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-        const badge = document.getElementById("ordersBadge");
-        if (badge) {
-            if (orders.length > 0) {
-                badge.style.display = "inline-block";
-                badge.textContent = orders.length;
-            } else {
-                badge.style.display = "none";
-            }
-        }
-        updatePendingBadge();
     } catch (e) {}
+
+    const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
+    const completedCount = orders.filter(o => o.status === "Delivered").length;
+
+    document.getElementById("skStatRevenue").textContent = `₹${totalRevenue}`;
+    document.getElementById("skStatTotal").textContent = orders.length;
+    document.getElementById("skStatPending").textContent = pendingCount;
+    document.getElementById("skStatCompleted").textContent = completedCount;
+    document.getElementById("skOrdersTabCount").textContent = orders.length;
 }
 
-function updatePendingBadge() {
-    try {
-        const orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-        const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
-        const pillBadge = document.getElementById("pendingOrdersPillBadge");
-        const tabBadge = document.getElementById("tabOrdersCount");
-        if (pillBadge) {
-            if (pendingCount > 0) {
-                pillBadge.style.display = "inline-block";
-                pillBadge.textContent = pendingCount;
-            } else {
-                pillBadge.style.display = "none";
-            }
-        }
-        if (tabBadge) tabBadge.textContent = orders.length;
-    } catch (e) {}
-}
-
-function openOrdersModal() {
-    const modal = document.getElementById("ordersModal");
-    const container = document.getElementById("ordersList");
-    if (!modal || !container) return;
-
-    let orders = [];
-    try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-    } catch (e) {
-        orders = [];
-    }
-
-    container.innerHTML = "";
-    if (orders.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
-                <span style="font-size: 40px; display: block; margin-bottom: 8px;">📦</span>
-                <strong>No past orders placed yet</strong>
-                <p style="font-size: 12px; margin-top: 4px;">Your placed orders will appear here for easy live tracking!</p>
-            </div>
-        `;
-    } else {
-        orders.forEach(order => {
-            const itemsSummary = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
-            let statusClass = "status-pending";
-            if (order.status === "Baking") statusClass = "status-baking";
-            if (order.status === "Out for Delivery") statusClass = "status-delivery";
-            if (order.status === "Delivered") statusClass = "status-delivered";
-
-            container.innerHTML += `
-                <div class="order-history-card">
-                    <div class="order-card-header">
-                        <strong>Order #${order.orderId}</strong>
-                        <span class="status-badge ${statusClass}">${order.status || "Pending"}</span>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted);">${order.date}</div>
-                    <div class="order-card-items">
-                        🛒 ${itemsSummary}
-                    </div>
-                    <div class="order-card-footer">
-                        <span>Mode: <b>${order.paymentMethod}</b></span>
-                        <strong style="color: var(--primary); font-size: 14px;">₹${order.total}</strong>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    modal.style.display = "flex";
-}
-
-function closeOrdersModal() {
-    const modal = document.getElementById("ordersModal");
-    if (modal) modal.style.display = "none";
-}
-
-/* ================================================================= */
-/* =================== REAL-TIME AUDIO SYNTHESIZER ================= */
-/* ================================================================= */
-function playNewOrderChime() {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {}
-}
-
-/* ================================================================= */
-/* ===================== PORTAL SWITCHING ENGINE =================== */
-/* ================================================================= */
-function switchPortal(portal) {
-    const custRoot = document.getElementById("customerPortalRoot");
-    const skRoot = document.getElementById("shopkeeperPortalRoot");
-    const btnCust = document.getElementById("btnCustomerPortal");
-    const btnSk = document.getElementById("btnShopkeeperPortal");
-
-    if (portal === "shopkeeper") {
-        if (custRoot) custRoot.style.display = "none";
-        if (skRoot) skRoot.style.display = "block";
-        if (btnCust) btnCust.classList.remove("active");
-        if (btnSk) btnSk.classList.add("active");
-        renderAdminDashboard();
-        showToast("Logged into Shopkeeper Kitchen Portal 🏪", "info");
-    } else {
-        if (custRoot) custRoot.style.display = "block";
-        if (skRoot) skRoot.style.display = "none";
-        if (btnCust) btnCust.classList.add("active");
-        if (btnSk) btnSk.classList.remove("active");
-        displayProducts();
-    }
-}
-
-function switchShopkeeperTab(tab) {
-    const tabs = ["orders", "inventory", "analytics", "settings"];
+function switchAdminTab(tab) {
+    const tabs = ["orders", "menu", "analytics", "settings"];
     tabs.forEach(t => {
-        const btn = document.getElementById("skTab" + t.charAt(0).toUpperCase() + t.slice(1));
-        const content = document.getElementById("skTabContent" + t.charAt(0).toUpperCase() + t.slice(1));
+        const btn = document.getElementById("tabSk" + t.charAt(0).toUpperCase() + t.slice(1));
+        const panel = document.getElementById("skTabPanel" + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) btn.classList.remove("active");
-        if (content) content.style.display = "none";
+        if (panel) panel.classList.remove("active");
     });
 
-    const activeBtn = document.getElementById("skTab" + tab.charAt(0).toUpperCase() + tab.slice(1));
-    const activeContent = document.getElementById("skTabContent" + tab.charAt(0).toUpperCase() + tab.slice(1));
+    const activeBtn = document.getElementById("tabSk" + tab.charAt(0).toUpperCase() + tab.slice(1));
+    const activePanel = document.getElementById("skTabPanel" + tab.charAt(0).toUpperCase() + tab.slice(1));
     if (activeBtn) activeBtn.classList.add("active");
-    if (activeContent) activeContent.style.display = "block";
+    if (activePanel) activePanel.classList.add("active");
 
-    if (tab === "orders") renderAdminOrders();
-    if (tab === "inventory") renderInventoryTable();
-    if (tab === "analytics") renderAnalytics();
+    if (tab === "orders") renderKitchenOrders();
+    if (tab === "menu") renderKitchenMenuTable();
+    if (tab === "analytics") renderKitchenAnalytics();
 }
 
-/* ================================================================= */
-/* =================== SHOPKEEPER ADMIN FUNCTIONS ================== */
-/* ================================================================= */
-let currentAdminFilter = "all";
-
-function renderAdminDashboard() {
-    renderAdminStats();
-    renderAdminOrders();
-    renderInventoryTable();
+function filterKitchenOrders(filter, btn) {
+    currentKitchenFilter = filter;
+    document.querySelectorAll(".sk-filter-btn").forEach(b => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    renderKitchenOrders();
 }
 
-function renderAdminStats() {
-    try {
-        const orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-        const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-        const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
-        const completedCount = orders.filter(o => o.status === "Delivered").length;
-
-        const revEl = document.getElementById("statRevenue");
-        const totEl = document.getElementById("statTotalOrders");
-        const pendEl = document.getElementById("statPendingOrders");
-        const compEl = document.getElementById("statCompletedOrders");
-
-        if (revEl) revEl.textContent = `₹${totalRevenue}`;
-        if (totEl) totEl.textContent = orders.length;
-        if (pendEl) pendEl.textContent = pendingCount;
-        if (compEl) compEl.textContent = completedCount;
-    } catch (e) {}
-}
-
-function filterAdminOrders(filter, btnElement) {
-    currentAdminFilter = filter;
-    document.querySelectorAll(".order-filter-btn").forEach(b => b.classList.remove("active"));
-    if (btnElement) btnElement.classList.add("active");
-    renderAdminOrders();
-}
-
-function renderAdminOrders() {
-    const container = document.getElementById("adminOrdersList");
-    if (!container) return;
+function renderKitchenOrders() {
+    const grid = document.getElementById("skKitchenOrdersGrid");
+    if (!grid) return;
 
     let orders = [];
     try {
         orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-    } catch (e) {
-        orders = [];
-    }
+    } catch (e) {}
 
     let filtered = orders;
-    if (currentAdminFilter !== "all") {
-        filtered = orders.filter(o => o.status === currentAdminFilter);
+    if (currentKitchenFilter !== "all") {
+        filtered = orders.filter(o => o.status === currentKitchenFilter);
     }
 
-    container.innerHTML = "";
+    grid.innerHTML = "";
     if (filtered.length === 0) {
-        container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px solid var(--border-color);">
-                <span style="font-size: 40px; display: block; margin-bottom: 8px;">📭</span>
-                <strong style="color: var(--primary);">No orders matching '${currentAdminFilter}'</strong>
-                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Incoming customer orders will appear automatically in real-time.</p>
+        grid.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:50px 20px; background:white; border-radius:18px; border:1px solid var(--border-color);">
+                <span style="font-size:40px; display:block; margin-bottom:8px;">📭</span>
+                <strong style="color:var(--primary); font-size:16px;">No kitchen orders for '${currentKitchenFilter}'</strong>
+                <p style="color:var(--text-muted); font-size:13px; margin-top:4px;">New incoming orders will appear automatically in real-time.</p>
             </div>
         `;
         return;
     }
 
     filtered.forEach(order => {
-        let statusClass = "status-pending";
-        if (order.status === "Baking") statusClass = "status-baking";
-        if (order.status === "Out for Delivery") statusClass = "status-delivery";
-        if (order.status === "Delivered") statusClass = "status-delivered";
+        let stClass = "st-pending";
+        if (order.status === "Baking") stClass = "st-baking";
+        if (order.status === "Out for Delivery") stClass = "st-delivery";
+        if (order.status === "Delivered") stClass = "st-delivered";
 
-        const itemsHtml = order.items.map(item => `
-            <div class="aoc-item-row">
-                <span>${item.name} × ${item.quantity}</span>
-                <strong>₹${item.price * item.quantity}</strong>
+        const itemsLines = order.items.map(i => `
+            <div class="koc-item-line">
+                <span>${i.name} × ${i.quantity}</span>
+                <strong>₹${i.price * i.quantity}</strong>
             </div>
         `).join("");
 
-        container.innerHTML += `
-            <div class="admin-order-card">
+        grid.innerHTML += `
+            <div class="kitchen-order-card">
                 <div>
-                    <div class="aoc-header">
+                    <div class="koc-header">
                         <div>
-                            <div class="aoc-id">Order #${order.orderId}</div>
-                            <div class="aoc-time">🕒 ${order.date}</div>
+                            <div class="koc-id">Order #${order.orderId}</div>
+                            <div class="koc-time">🕒 ${order.date}</div>
                         </div>
-                        <span class="status-badge ${statusClass}">${order.status || "Pending"}</span>
+                        <span class="status-badge ${stClass}">${order.status || "Pending"}</span>
                     </div>
 
-                    <div class="aoc-customer">
-                        <h4>👤 ${order.customerName || "Customer"} (${order.customerPhone || "N/A"})</h4>
-                        <div>📍 ${order.address || "Counter Pickup"}</div>
-                        ${order.note ? `<div style="margin-top: 4px; color: #8c786c;">📝 <i>${order.note}</i></div>` : ""}
-                        <div style="margin-top: 4px;">💳 <b>${order.paymentMethod}</b> ${order.utr ? `(UTR: ${order.utr})` : ""}</div>
+                    <div class="koc-cust-info">
+                        <strong>👤 ${order.customerName} (${order.customerPhone})</strong>
+                        <div>📍 ${order.address}</div>
+                        <div>🕒 Slot: <b>${order.slot}</b></div>
+                        ${order.note ? `<div>📝 <i>${order.note}</i></div>` : ""}
+                        <div>💳 <b>${order.paymentMethod}</b> ${order.utr ? `(UTR: ${order.utr})` : ""}</div>
                     </div>
 
-                    <div class="aoc-items-list">
-                        ${itemsHtml}
-                        <div class="aoc-total-row">
+                    <div class="koc-items">
+                        ${itemsLines}
+                        <div class="koc-total-line">
                             <span>Total Bill</span>
                             <span>₹${order.total}</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="aoc-actions">
-                    <button class="aoc-btn aoc-btn-baking" onclick="updateOrderStatus('${order.orderId}', 'Baking')">
+                <div class="koc-actions">
+                    <button class="koc-btn btn-baking" onclick="setOrderStatus('${order.orderId}', 'Baking')">
                         🎂 Start Baking
                     </button>
-                    <button class="aoc-btn aoc-btn-delivery" onclick="updateOrderStatus('${order.orderId}', 'Out for Delivery')">
+                    <button class="koc-btn btn-delivery" onclick="setOrderStatus('${order.orderId}', 'Out for Delivery')">
                         🚚 Out for Delivery
                     </button>
-                    <button class="aoc-btn aoc-btn-delivered" onclick="updateOrderStatus('${order.orderId}', 'Delivered')">
+                    <button class="koc-btn btn-delivered" onclick="setOrderStatus('${order.orderId}', 'Delivered')">
                         ✅ Mark Delivered
-                    </button>
-                    <button class="aoc-btn aoc-btn-print" onclick="printOrderInvoiceById('${order.orderId}')" title="Print KOT Receipt">
-                        🖨️
                     </button>
                 </div>
             </div>
@@ -1192,165 +735,134 @@ function renderAdminOrders() {
     });
 }
 
-function updateOrderStatus(orderId, newStatus) {
+function setOrderStatus(orderId, newStatus) {
     let orders = [];
     try {
         orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-    } catch (e) {
-        orders = [];
-    }
+    } catch (e) {}
 
-    const target = orders.find(o => String(o.orderId) === String(orderId));
-    if (target) {
-        target.status = newStatus;
-        localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
-        showToast(`Order #${orderId} updated to: ${newStatus} ⚡`, "success");
-        renderAdminStats();
-        renderAdminOrders();
-        updatePendingBadge();
-    }
-}
-
-function printOrderInvoiceById(orderId) {
-    let orders = [];
-    try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
-    } catch (e) {
-        orders = [];
-    }
     const order = orders.find(o => String(o.orderId) === String(orderId));
     if (order) {
-        currentOrder = order;
-        printOrderReceipt();
+        order.status = newStatus;
+        localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
+        showToast(`Order #${orderId} set to: ${newStatus} ⚡`, "success");
+        renderKitchenStats();
+        renderKitchenOrders();
+        updateCustomerBadges();
+        if (currentOrder && String(currentOrder.orderId) === String(orderId)) {
+            updateTimelineState(newStatus);
+        }
     }
 }
 
-/* ================================================================= */
-/* =================== MENU & STOCK MANAGEMENT ===================== */
-/* ================================================================= */
-function getActiveProducts() {
-    let stored = [];
-    try {
-        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
-    } catch (e) {}
-    return [...products, ...stored];
-}
-
-function renderInventoryTable() {
-    const tbody = document.getElementById("inventoryTableBody");
-    const countEl = document.getElementById("inventoryCount");
+function renderKitchenMenuTable() {
+    const tbody = document.getElementById("skMenuTableBody");
+    const countEl = document.getElementById("skMenuCount");
     if (!tbody) return;
 
-    const allProds = getActiveProducts();
-    if (countEl) countEl.textContent = allProds.length;
+    const all = getAllProducts();
+    if (countEl) countEl.textContent = all.length;
 
-    let stockStatusMap = {};
+    let stockMap = {};
     try {
-        stockStatusMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+        stockMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
     } catch (e) {}
 
-    tbody.innerHTML = "";
-    allProds.forEach(prod => {
-        const isOutOfStock = stockStatusMap[prod.id] === false;
-        tbody.innerHTML += `
+    tbody.innerHTML = all.map(prod => {
+        const isOutOfStock = stockMap[prod.id] === false;
+        return `
             <tr>
                 <td>
                     <strong>${prod.name}</strong>
-                    <div style="font-size: 11px; color: #8c786c;">${prod.description || ""}</div>
+                    <div style="font-size:11px; color:#8c786c;">${prod.description || ""}</div>
                 </td>
-                <td style="text-transform: capitalize;">${prod.category}</td>
+                <td style="text-transform:capitalize;">${prod.category}</td>
                 <td><strong>₹${prod.price}</strong></td>
                 <td>${prod.isVeg ? "🟢 Veg" : "🔴 Non-Veg"}</td>
                 <td>
-                    <button class="stock-toggle-btn ${isOutOfStock ? "stock-out" : "stock-in"}" onclick="toggleProductStock(${prod.id})">
+                    <button class="stock-toggle-btn ${isOutOfStock ? "stock-out" : "stock-in"}" onclick="toggleKitchenStock(${prod.id})">
                         ${isOutOfStock ? "❌ Out of Stock" : "🟢 In Stock"}
                     </button>
                 </td>
                 <td>
-                    <button class="stock-toggle-btn stock-out" onclick="deleteCustomProduct(${prod.id})" style="font-size: 11px;">
+                    <button class="stock-toggle-btn stock-out" onclick="deleteKitchenProduct(${prod.id})" style="font-size:11px;">
                         🗑️ Delete
                     </button>
                 </td>
             </tr>
         `;
-    });
+    }).join("");
 }
 
-function toggleProductStock(prodId) {
-    let stockStatusMap = {};
+function toggleKitchenStock(prodId) {
+    let stockMap = {};
     try {
-        stockStatusMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+        stockMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
     } catch (e) {}
 
-    stockStatusMap[prodId] = stockStatusMap[prodId] === false ? true : false;
-    localStorage.setItem("smartbakes_stock_status", JSON.stringify(stockStatusMap));
-    showToast(`Stock status updated for item #${prodId} 🔄`, "info");
-    renderInventoryTable();
-    displayProducts();
+    stockMap[prodId] = stockMap[prodId] === false ? true : false;
+    localStorage.setItem("smartbakes_stock_status", JSON.stringify(stockMap));
+    showToast(`Stock updated for item #${prodId} 🔄`, "info");
+    renderKitchenMenuTable();
+    renderStoreProducts();
 }
 
-function addNewProductModal() {
-    const modal = document.getElementById("addProductModal");
-    if (modal) modal.style.display = "flex";
+function openAddProductModal() {
+    document.getElementById("addProductModalOverlay").style.display = "flex";
 }
 
 function closeAddProductModal() {
-    const modal = document.getElementById("addProductModal");
-    if (modal) modal.style.display = "none";
+    document.getElementById("addProductModalOverlay").style.display = "none";
 }
 
-function saveNewProduct(e) {
+function handleAddNewProduct(e) {
     e.preventDefault();
-    const name = document.getElementById("newProdName").value.trim();
-    const category = document.getElementById("newProdCategory").value;
-    const price = Number(document.getElementById("newProdPrice").value);
-    const image = document.getElementById("newProdImage").value.trim() || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=90";
-    const description = document.getElementById("newProdDesc").value.trim() || "Delicious bakery specialty.";
-    const isVeg = document.getElementById("newProdDiet").value === "true";
+    const name = document.getElementById("addProdName").value.trim();
+    const cat = document.getElementById("addProdCat").value;
+    const price = Number(document.getElementById("addProdPrice").value);
+    const img = document.getElementById("addProdImg").value.trim() || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=90";
+    const desc = document.getElementById("addProdDesc").value.trim() || "Delicious bakery specialty.";
+    const isVeg = document.getElementById("addProdDiet").value === "true";
 
     const newProd = {
         id: Date.now(),
         name,
-        category,
+        category: cat,
         price,
-        image,
-        description,
+        image: img,
+        description: desc,
         isVeg,
         rating: "5.0 ★ (New)"
     };
 
-    let stored = [];
+    let custom = [];
     try {
-        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
     } catch (err) {}
-    stored.push(newProd);
-    localStorage.setItem("smartbakes_custom_products", JSON.stringify(stored));
+    custom.push(newProd);
+    localStorage.setItem("smartbakes_custom_products", JSON.stringify(custom));
 
     showToast(`Added '${name}' to Bakery Menu! 🎂`, "success");
     closeAddProductModal();
-    document.getElementById("addProductForm").reset();
-    renderInventoryTable();
-    displayProducts();
+    renderKitchenMenuTable();
+    renderStoreProducts();
 }
 
-function deleteCustomProduct(prodId) {
-    if (!confirm("Are you sure you want to remove this product?")) return;
-    let stored = [];
+function deleteKitchenProduct(prodId) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    let custom = [];
     try {
-        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
     } catch (e) {}
-    stored = stored.filter(p => p.id !== prodId);
-    localStorage.setItem("smartbakes_custom_products", JSON.stringify(stored));
-    showToast("Product removed 🗑️", "info");
-    renderInventoryTable();
-    displayProducts();
+    custom = custom.filter(p => p.id !== prodId);
+    localStorage.setItem("smartbakes_custom_products", JSON.stringify(custom));
+    showToast("Product deleted 🗑️", "info");
+    renderKitchenMenuTable();
+    renderStoreProducts();
 }
 
-/* ================================================================= */
-/* ===================== SALES ANALYTICS =========================== */
-/* ================================================================= */
-function renderAnalytics() {
-    const container = document.getElementById("analyticsBreakdownTable");
+function renderKitchenAnalytics() {
+    const container = document.getElementById("skAnalyticsTableContainer");
     if (!container) return;
 
     let orders = [];
@@ -1369,25 +881,23 @@ function renderAnalytics() {
         });
     });
 
-    const items = Object.keys(salesMap);
-    if (items.length === 0) {
-        container.innerHTML = `
-            <p style="padding: 20px; color: var(--text-muted); text-align: center;">No product sales recorded yet.</p>
-        `;
+    const keys = Object.keys(salesMap);
+    if (keys.length === 0) {
+        container.innerHTML = `<p style="padding:20px; text-align:center; color:var(--text-muted);">No sales data recorded yet.</p>`;
         return;
     }
 
-    let rows = items.map(name => `
+    const rows = keys.map(k => `
         <tr>
-            <td><strong>${name}</strong></td>
-            <td>${salesMap[name].qty} units</td>
-            <td>₹${salesMap[name].price}</td>
-            <td><strong>₹${salesMap[name].revenue}</strong></td>
+            <td><strong>${k}</strong></td>
+            <td>${salesMap[k].qty} units</td>
+            <td>₹${salesMap[k].price}</td>
+            <td><strong>₹${salesMap[k].revenue}</strong></td>
         </tr>
     `).join("");
 
     container.innerHTML = `
-        <table class="inventory-table">
+        <table class="sk-data-table">
             <thead>
                 <tr>
                     <th>Product Name</th>
@@ -1396,83 +906,182 @@ function renderAnalytics() {
                     <th>Total Revenue</th>
                 </tr>
             </thead>
-            <tbody>
-                ${rows}
-            </tbody>
+            <tbody>${rows}</tbody>
         </table>
     `;
 }
 
-/* ================================================================= */
-/* ===================== SHOP & UPI SETTINGS ======================= */
-/* ================================================================= */
-function saveShopSettings() {
-    const payeeName = document.getElementById("settingPayeeName").value.trim();
-    const upiId = document.getElementById("settingUpiId").value.trim();
-    const bankTag = document.getElementById("settingBankTag").value.trim();
-    const phone = document.getElementById("settingWhatsAppNumber").value.trim();
-    const deliveryFee = Number(document.getElementById("settingDeliveryFee").value);
-    const freeThreshold = Number(document.getElementById("settingFreeThreshold").value);
+function saveKitchenSettings() {
+    const name = document.getElementById("cfgPayeeName").value.trim();
+    const upi = document.getElementById("cfgUpiId").value.trim();
+    const bank = document.getElementById("cfgBankTag").value.trim();
+    const phone = document.getElementById("cfgPhone").value.trim();
 
     const settings = {
-        payeeName: payeeName || "Muthukrishnan S",
-        upiId: upiId || "muthukrishnans2002@okhdfcbank",
-        bankTag: bankTag || "Indian Bank • 4189",
-        phone: phone || "919876543210",
-        deliveryFee: deliveryFee || 30,
-        freeThreshold: freeThreshold || 499
+        payeeName: name || "Muthukrishnan S",
+        upiId: upi || "muthukrishnans2002@okhdfcbank",
+        bankTag: bank || "Indian Bank • 4189",
+        phone: phone || "919876543210"
     };
 
     localStorage.setItem("smartbakes_settings", JSON.stringify(settings));
-    showToast("Bakery & UPI Settings Saved! 💾", "success");
-    applyShopSettingsToUI();
+    showToast("Kitchen & UPI Settings Saved! 💾", "success");
+    applySettingsToUI();
 }
 
-function applyShopSettingsToUI() {
-    let settings = null;
+function applySettingsToUI() {
+    let s = null;
     try {
-        settings = JSON.parse(localStorage.getItem("smartbakes_settings"));
+        s = JSON.parse(localStorage.getItem("smartbakes_settings"));
     } catch (e) {}
 
-    if (settings) {
-        const upiPayee = document.getElementById("upiPayeeNameDisplay");
-        const upiId = document.getElementById("upiIdTextDisplay");
-        const upiBank = document.getElementById("upiBankTagDisplay");
-        const payBtn = document.getElementById("payViaUpiAppBtn");
-        const footerUpi = document.getElementById("footerUpiDisplay");
-        const footerPhone = document.getElementById("footerPhoneDisplay");
-
-        if (upiPayee) upiPayee.textContent = settings.payeeName;
-        if (upiId) upiId.textContent = settings.upiId;
-        if (upiBank) upiBank.textContent = `🏦 ${settings.bankTag}`;
-        if (payBtn) payBtn.href = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.payeeName)}&cu=INR`;
-        if (footerUpi) footerUpi.textContent = `💳 UPI: ${settings.upiId}`;
-        if (footerPhone) footerPhone.textContent = `📞 +${settings.phone}`;
+    if (s) {
+        document.getElementById("chkPayeeName").textContent = s.payeeName;
+        document.getElementById("chkUpiId").textContent = s.upiId;
+        document.getElementById("chkBankTag").textContent = `🏦 ${s.bankTag}`;
+        document.getElementById("chkDirectPayBtn").href = `upi://pay?pa=${s.upiId}&pn=${encodeURIComponent(s.payeeName)}&cu=INR`;
+        document.getElementById("footerContactUpi").textContent = `💳 UPI: ${s.upiId}`;
+        document.getElementById("footerContactPhone").textContent = `📞 +${s.phone}`;
     }
 }
 
 /* ================================================================= */
-/* ================= MULTI-TAB REAL TIME STORAGE SYNC ============= */
+/* ===================== MY ORDERS MODAL =========================== */
+/* ================================================================= */
+function openOrdersModal() {
+    const modal = document.getElementById("ordersModalOverlay");
+    const list = document.getElementById("ordersModalList");
+    if (!modal || !list) return;
+
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {}
+
+    list.innerHTML = "";
+    if (orders.length === 0) {
+        list.innerHTML = `
+            <div style="text-align:center; padding:40px 10px; color:var(--text-muted);">
+                <span style="font-size:40px; display:block; margin-bottom:8px;">📦</span>
+                <strong>No past orders placed yet</strong>
+                <p style="font-size:12px; margin-top:4px;">Your bakery orders will appear here for easy live tracking!</p>
+            </div>
+        `;
+    } else {
+        orders.forEach(order => {
+            const itemsText = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
+            let stClass = "st-pending";
+            if (order.status === "Baking") stClass = "st-baking";
+            if (order.status === "Out for Delivery") stClass = "st-delivery";
+            if (order.status === "Delivered") stClass = "st-delivered";
+
+            list.innerHTML += `
+                <div style="background:#fbf7f4; border-radius:14px; padding:16px; margin-bottom:12px; border:1px solid #ecd8cb;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <strong>Order #${order.orderId}</strong>
+                        <span class="status-badge ${stClass}">${order.status || "Pending"}</span>
+                    </div>
+                    <small style="color:var(--text-muted);">${order.date}</small>
+                    <div style="margin:8px 0; font-size:13px;">🛒 ${itemsText}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;">
+                        <span>Mode: ${order.paymentMethod}</span>
+                        <span style="color:var(--primary);">₹${order.total}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    modal.style.display = "flex";
+}
+
+function closeOrdersModal() {
+    document.getElementById("ordersModalOverlay").style.display = "none";
+}
+
+function updateCustomerBadges() {
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {}
+
+    const countBadge = document.getElementById("customerOrdersCountBadge");
+    const skBadge = document.getElementById("skPendingBadge");
+
+    if (countBadge) {
+        if (orders.length > 0) {
+            countBadge.style.display = "inline-block";
+            countBadge.textContent = orders.length;
+        } else {
+            countBadge.style.display = "none";
+        }
+    }
+
+    const pending = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
+    if (skBadge) {
+        if (pending > 0) {
+            skBadge.style.display = "inline-block";
+            skBadge.textContent = pending;
+        } else {
+            skBadge.style.display = "none";
+        }
+    }
+}
+
+/* ================================================================= */
+/* ===================== TOAST & AUDIO HELPERS ===================== */
+/* ================================================================= */
+function showToast(text, type = "info") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.textContent = text;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function playOrderChimeSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {}
+}
+
+/* ================================================================= */
+/* ================= MULTI-TAB STORAGE EVENT SYNC ================== */
 /* ================================================================= */
 window.addEventListener("storage", (e) => {
     if (e.key === "smartbakes_orders") {
-        renderAdminStats();
-        renderAdminOrders();
-        updateOrdersBadge();
-        playNewOrderChime();
+        renderKitchenStats();
+        renderKitchenOrders();
+        updateCustomerBadges();
+        playOrderChimeSound();
     }
     if (e.key === "smartbakes_stock_status" || e.key === "smartbakes_custom_products") {
-        displayProducts();
-        renderInventoryTable();
+        renderStoreProducts();
+        renderKitchenMenuTable();
     }
     if (e.key === "smartbakes_settings") {
-        applyShopSettingsToUI();
+        applySettingsToUI();
     }
 });
 
-// Initialize on DOM ready
+// INITIALIZE
 document.addEventListener("DOMContentLoaded", () => {
-    applyShopSettingsToUI();
-    updateOrdersBadge();
+    renderStoreProducts();
+    applySettingsToUI();
+    updateCustomerBadges();
 });
-

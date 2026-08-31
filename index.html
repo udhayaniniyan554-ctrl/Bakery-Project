@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Bakes — Customer & Shopkeeper Portal</title>
+    <title>Smart Bakes — Customer Store & Shopkeeper Kitchen Portal</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts for elevated typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
@@ -18,666 +17,666 @@
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <!-- GLOBAL TOP PORTAL BAR -->
-    <div class="portal-switcher-bar">
-        <div class="portal-brand">
-            <span class="brand-dot"></span> <strong>SMART BAKES</strong> • Unified Bakery System
+    <header class="portal-nav-bar">
+        <div class="portal-nav-left" onclick="showView('landing')">
+            <span class="portal-brand-badge">✦ SMART BAKES</span>
+            <span class="portal-sub-text">Unified Bakery System</span>
         </div>
-        <div class="portal-nav-pills">
-            <button id="btnCustomerPortal" class="portal-pill active" onclick="switchPortal('customer')">
+        <div class="portal-nav-right">
+            <button id="navBtnCustomer" class="nav-portal-btn active" onclick="showView('customer')">
                 🛍️ Customer Store
             </button>
-            <button id="btnShopkeeperPortal" class="portal-pill" onclick="switchPortal('shopkeeper')">
-                🏪 Shopkeeper Portal <span id="pendingOrdersPillBadge" class="alert-count" style="display:none;">0</span>
+            <button id="navBtnShopkeeper" class="nav-portal-btn" onclick="showView('shopkeeper')">
+                🏪 Shopkeeper Portal <span id="skPendingBadge" class="sk-alert-badge" style="display:none;">0</span>
             </button>
+        </div>
+    </header>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== VIEW 1: PORTAL LANDING ====================== -->
+    <!-- ================================================================= -->
+    <section id="viewLanding" class="app-view">
+        <div class="landing-hero">
+            <div class="landing-badge">SMART BAKES • OFFICIAL PORTAL</div>
+            <h1>Fresh Artisanal Bakery & Cafe</h1>
+            <p>Welcome to Smart Bakes ordering portal. Select your destination below:</p>
+
+            <div class="portal-choice-grid">
+                <!-- CUSTOMER CHOICE CARD -->
+                <div class="choice-card" onclick="showView('customer')">
+                    <div class="choice-icon">🛍️</div>
+                    <h2>Customer Store</h2>
+                    <p>Browse fresh chocolate cakes, savoury puffs, buns & beverages. Order online with instant UPI QR & live order tracking.</p>
+                    <button class="choice-btn primary">Enter Customer Store →</button>
+                </div>
+
+                <!-- SHOPKEEPER CHOICE CARD -->
+                <div class="choice-card" onclick="showView('shopkeeper')">
+                    <div class="choice-icon">🏪</div>
+                    <h2>Shopkeeper / Kitchen Portal</h2>
+                    <p>Bakery staff dashboard for processing live incoming orders, managing menu & live stock, sales reports, and UPI settings.</p>
+                    <button class="choice-btn secondary">Open Kitchen Dashboard →</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== VIEW 2: CUSTOMER STORE ====================== -->
+    <!-- ================================================================= -->
+    <section id="viewCustomer" class="app-view active">
+
+        <!-- ANNOUNCEMENT BANNER -->
+        <div class="announcement-banner">
+            <span>🎉 Fresh from the oven! Use coupon <strong>SWEET10</strong> for 10% OFF | Free delivery above ₹499!</span>
+        </div>
+
+        <!-- STORE HEADER & NAVBAR -->
+        <div class="store-navbar">
+            <div class="store-logo" onclick="showView('customer')">
+                <div class="logo-circle">✦</div>
+                <div>
+                    <h2>Smart Bakes</h2>
+                    <small>ARTISANAL BAKERY</small>
+                </div>
+            </div>
+
+            <div class="store-nav-links">
+                <a href="#menuSection" class="active">Menu</a>
+                <a href="javascript:void(0)" onclick="openOrdersModal()">My Orders <span id="customerOrdersCountBadge" class="nav-item-badge" style="display:none;">0</span></a>
+                <a href="javascript:void(0)" onclick="showView('shopkeeper')">Kitchen Staff</a>
+            </div>
+
+            <div class="store-nav-actions">
+                <button class="icon-nav-btn" onclick="openOrdersModal()" title="My Orders">
+                    📋 <span class="btn-label">Orders</span>
+                </button>
+                <button class="cart-trigger-btn" onclick="openCartDrawer()" title="Shopping Cart">
+                    🛒 Cart
+                    <span id="cartCountBadge" class="cart-counter">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- HERO BANNER -->
+        <div class="store-hero">
+            <div class="store-hero-content">
+                <span class="hero-tag">HANDCRAFTED FRESH DAILY</span>
+                <h1>A Little Sweetness<br><i>in Every Single Bite.</i></h1>
+                <p>Indulge in artisanal chocolate cakes, warm jam buns, crispy savoury puffs, and chilled refreshments crafted with premium ingredients.</p>
+                <div class="hero-action-row">
+                    <a href="#menuSection" class="hero-btn-primary">Explore Menu ↓</a>
+                    <button class="hero-btn-secondary" onclick="openOrdersModal()">Track Recent Order 📦</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STORE MENU SECTION -->
+        <div class="store-menu-container" id="menuSection">
+            <div class="menu-top-row">
+                <div>
+                    <span class="menu-sub-tag">OUR BAKERY SPECIALTIES</span>
+                    <h2 class="menu-main-title">Today's Fresh Picks</h2>
+                </div>
+
+                <div class="search-box-wrapper">
+                    <input
+                        type="text"
+                        id="storeSearchInput"
+                        placeholder="🔍 Search cakes, puffs, buns, drinks..."
+                        onkeyup="handleStoreSearch()"
+                    >
+                </div>
+            </div>
+
+            <!-- CATEGORY FILTER PILLS -->
+            <div class="category-pill-bar" id="categoryPillBar">
+                <button class="category-pill active" onclick="filterStoreCategory('all', this)">✨ All Items</button>
+                <button class="category-pill" onclick="filterStoreCategory('cakes', this)">🎂 Cakes</button>
+                <button class="category-pill" onclick="filterStoreCategory('snacks', this)">🥟 Snacks & Puffs</button>
+                <button class="category-pill" onclick="filterStoreCategory('buns', this)">🥐 Buns & Breads</button>
+                <button class="category-pill" onclick="filterStoreCategory('drinks', this)">🥤 Beverages</button>
+            </div>
+
+            <!-- PRODUCTS GRID -->
+            <div id="storeProductsGrid" class="store-products-grid">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="store-footer">
+            <div class="footer-inner">
+                <div class="footer-col">
+                    <h3>✦ Smart Bakes</h3>
+                    <p>Artisanal bakery and cafe. Handcrafted happiness delivered to your doorstep.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Customer Links</h4>
+                    <a href="#menuSection">Browse Menu</a>
+                    <a href="javascript:void(0)" onclick="openOrdersModal()">My Orders</a>
+                    <a href="order.html">WhatsApp Order Form</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact & Payment</h4>
+                    <p id="footerContactPhone">📞 +91 98765 43210</p>
+                    <p id="footerContactUpi">💳 UPI: muthukrishnans2002@okhdfcbank</p>
+                    <p>📍 Smart Bakes Bakery Street</p>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                <small>© 2026 Smart Bakes • Authorized Bakery Ordering Portal</small>
+            </div>
+        </footer>
+
+    </section>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== VIEW 3: CHECKOUT PAGE ======================= -->
+    <!-- ================================================================= -->
+    <section id="viewCheckout" class="app-view">
+        <div class="checkout-page-wrapper">
+            <button class="view-back-btn" onclick="showView('customer')">
+                ← Back to Bakery Menu
+            </button>
+
+            <div class="checkout-header-block">
+                <span class="checkout-tag">SMART BAKES CHECKOUT</span>
+                <h1>Delivery & Payment Details</h1>
+                <p>Complete your address and choose your instant payment method</p>
+            </div>
+
+            <div class="checkout-two-col-grid">
+
+                <!-- LEFT COL: CUSTOMER & PAYMENT FORM -->
+                <div class="checkout-form-column">
+
+                    <!-- STEP 1: CUSTOMER DETAILS -->
+                    <div class="form-section-card">
+                        <div class="card-step-badge">Step 1</div>
+                        <h3>Customer & Delivery Address</h3>
+
+                        <label for="chkName">Full Name *</label>
+                        <input type="text" id="chkName" placeholder="e.g. Muthukrishnan S" required>
+
+                        <label for="chkPhone">Mobile Number (10 Digits) *</label>
+                        <input type="tel" id="chkPhone" maxlength="10" placeholder="e.g. 9876543210" required>
+
+                        <label for="chkAddress">Complete Delivery Address *</label>
+                        <textarea id="chkAddress" rows="3" placeholder="Flat/House No, Street, Area, City, Pincode" required></textarea>
+
+                        <label for="chkSlot">Preferred Delivery Slot</label>
+                        <select id="chkSlot" class="form-select">
+                            <option value="Immediate (Within 45 Mins)">⚡ Immediate (Within 45 Mins)</option>
+                            <option value="Today Evening (5:00 PM - 7:00 PM)">🌅 Today Evening (5:00 PM - 7:00 PM)</option>
+                            <option value="Tonight (7:00 PM - 9:00 PM)">🌙 Tonight (7:00 PM - 9:00 PM)</option>
+                            <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">☀️ Tomorrow Morning (8:00 AM - 10:00 AM)</option>
+                        </select>
+
+                        <label for="chkNote">Special Instructions / Cake Inscription <small>(Optional)</small></label>
+                        <input type="text" id="chkNote" placeholder="e.g. Please write 'Happy Birthday' on cake">
+                    </div>
+
+                    <!-- STEP 2: PAYMENT OPTIONS -->
+                    <div class="form-section-card">
+                        <div class="card-step-badge">Step 2</div>
+                        <h3>Payment Method</h3>
+
+                        <!-- PAYMENT METHOD SELECTOR TABS -->
+                        <div class="payment-method-selector">
+                            <button id="payTabUpi" class="pay-method-pill active" onclick="setPaymentMethod('upi')">
+                                📱 UPI / Scan QR Code
+                            </button>
+                            <button id="payTabCod" class="pay-method-pill" onclick="setPaymentMethod('cod')">
+                                💵 Cash on Delivery
+                            </button>
+                        </div>
+
+                        <!-- UPI CONTAINER -->
+                        <div id="paySectionUpi" class="payment-detail-box">
+                            <div class="upi-live-tag">
+                                <span class="green-dot"></span> Instant UPI Verification
+                            </div>
+
+                            <div class="clean-qr-display-box">
+                                <p class="qr-instruction">Scan with Google Pay, PhonePe, Paytm, BHIM or any Banking App</p>
+                                <div class="qr-image-frame">
+                                    <img
+                                        id="cleanQrImg"
+                                        src="data:image/jpeg;base64,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"
+                                        alt="Smart Bakes UPI QR Code"
+                                        class="rendered-qr-code"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="upi-account-card">
+                                <div class="upi-user-row">
+                                    <div class="upi-avatar-circle">👤</div>
+                                    <div>
+                                        <h4 id="chkPayeeName">Muthukrishnan S</h4>
+                                        <span id="chkBankTag" class="bank-sub-tag">🏦 Indian Bank • 4189</span>
+                                    </div>
+                                </div>
+
+                                <div class="upi-id-row">
+                                    <div>
+                                        <small>UPI VPA ID</small>
+                                        <strong id="chkUpiId">muthukrishnans2002@okhdfcbank</strong>
+                                    </div>
+                                    <button class="copy-btn" onclick="copyUpiVpa()">📋 Copy ID</button>
+                                </div>
+
+                                <a
+                                    id="chkDirectPayBtn"
+                                    class="upi-intent-btn"
+                                    href="upi://pay?pa=muthukrishnans2002@okhdfcbank&pn=Muthukrishnan%20S&cu=INR"
+                                >
+                                    🚀 Pay Directly via UPI App
+                                </a>
+                            </div>
+
+                            <div class="utr-field-block">
+                                <label for="chkUtr">UPI Transaction Ref / UTR No. <small>(Optional)</small></label>
+                                <input type="text" id="chkUtr" maxlength="16" placeholder="e.g. 423871928371 (12 digits)">
+                            </div>
+                        </div>
+
+                        <!-- COD CONTAINER -->
+                        <div id="paySectionCod" class="payment-detail-box" style="display:none;">
+                            <div class="cod-info-card">
+                                <div class="cod-icon-large">💵</div>
+                                <h4>Cash on Delivery Selected</h4>
+                                <p>Pay with cash or UPI directly to our delivery executive when your warm bakery order arrives.</p>
+                                <small>💡 Please keep exact change ready for a swift handover!</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COL: ORDER SUMMARY -->
+                <div class="checkout-summary-column">
+                    <div class="summary-sticky-card">
+                        <h3>Order Summary</h3>
+                        <div id="chkItemsList" class="summary-items-list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <div class="summary-calc-block">
+                            <div class="calc-row">
+                                <span>Items Subtotal</span>
+                                <span id="chkSubtotal">₹0</span>
+                            </div>
+                            <div class="calc-row discount-row" id="chkDiscountRow" style="display:none;">
+                                <span>Coupon Discount</span>
+                                <span id="chkDiscount">-₹0</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Delivery Fee</span>
+                                <span id="chkDeliveryFee">₹30</span>
+                            </div>
+                            <div class="calc-row grand-total-row">
+                                <strong>Total Payable</strong>
+                                <strong id="chkGrandTotal">₹0</strong>
+                            </div>
+                        </div>
+
+                        <button class="place-order-btn" onclick="submitFinalOrder()">
+                            ✓ Place Order & Confirm
+                        </button>
+                        <p class="summary-secure-note">
+                            ⚡ Orders are instantly routed to the kitchen dashboard!
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== VIEW 4: ORDER SUCCESS & TICKET ============== -->
+    <!-- ================================================================= -->
+    <section id="viewSuccess" class="app-view">
+        <div class="success-page-wrapper">
+            <div class="success-receipt-card">
+                <div class="success-check-badge">✓</div>
+                <span class="success-top-tag">ORDER CONFIRMED & TRANSMITTED</span>
+                <h1>Thank You for Your Order!</h1>
+                <p class="success-message">Your bakery order has been placed in real-time. Track live progress below:</p>
+
+                <!-- LIVE 4-STEP TRACKER BAR -->
+                <div class="order-tracker-timeline">
+                    <div class="tracker-node completed" id="trackStep1">
+                        <div class="tracker-circle">1</div>
+                        <span>Received</span>
+                    </div>
+                    <div class="tracker-connector" id="trackLine1"></div>
+                    <div class="tracker-node" id="trackStep2">
+                        <div class="tracker-circle">2</div>
+                        <span>Baking 🎂</span>
+                    </div>
+                    <div class="tracker-connector" id="trackLine2"></div>
+                    <div class="tracker-node" id="trackStep3">
+                        <div class="tracker-circle">3</div>
+                        <span>Out for Delivery 🚚</span>
+                    </div>
+                    <div class="tracker-connector" id="trackLine3"></div>
+                    <div class="tracker-node" id="trackStep4">
+                        <div class="tracker-circle">4</div>
+                        <span>Delivered ✅</span>
+                    </div>
+                </div>
+
+                <!-- TICKET QR & INVOICE DETAILS -->
+                <div id="successInvoiceBody" class="success-invoice-body">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- SUCCESS ACTIONS -->
+                <div class="success-btn-row">
+                    <button class="whatsapp-action-btn" onclick="dispatchOrderToWhatsApp()">
+                        💬 Send Order to Bakery WhatsApp
+                    </button>
+                    <button class="print-action-btn" onclick="printReceiptTicket()">
+                        🖨️ Print / Save Receipt
+                    </button>
+                </div>
+
+                <button class="continue-store-btn" onclick="showView('customer')">
+                    ← Back to Bakery Menu
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== VIEW 5: SHOPKEEPER DASHBOARD ================ -->
+    <!-- ================================================================= -->
+    <section id="viewShopkeeper" class="app-view">
+        <div class="shopkeeper-dashboard-wrapper">
+
+            <!-- SHOPKEEPER TOP HEADER -->
+            <div class="sk-top-bar">
+                <div class="sk-title-info">
+                    <h2>🏪 Smart Bakes • Kitchen Dashboard</h2>
+                    <p>Real-Time Kitchen Orders & Live Stock Management</p>
+                </div>
+                <div class="sk-top-actions">
+                    <span class="live-status-pill">
+                        <span class="live-pulse-dot"></span> Live Sync Online
+                    </span>
+                    <button class="sk-primary-btn" onclick="openAddProductModal()">+ Add New Product</button>
+                    <button class="sk-secondary-btn" onclick="showView('customer')">Back to Store 🛍️</button>
+                </div>
+            </div>
+
+            <!-- LIVE STATS TILES -->
+            <div class="sk-stats-grid">
+                <div class="sk-stat-box revenue-box">
+                    <div class="stat-icon-wrapper">💰</div>
+                    <div>
+                        <small>TODAY'S REVENUE</small>
+                        <h2 id="skStatRevenue">₹0</h2>
+                    </div>
+                </div>
+                <div class="sk-stat-box orders-box">
+                    <div class="stat-icon-wrapper">📦</div>
+                    <div>
+                        <small>TOTAL ORDERS</small>
+                        <h2 id="skStatTotal">0</h2>
+                    </div>
+                </div>
+                <div class="sk-stat-box pending-box">
+                    <div class="stat-icon-wrapper">⏳</div>
+                    <div>
+                        <small>PENDING / BAKING</small>
+                        <h2 id="skStatPending">0</h2>
+                    </div>
+                </div>
+                <div class="sk-stat-box completed-box">
+                    <div class="stat-icon-wrapper">✅</div>
+                    <div>
+                        <small>COMPLETED</small>
+                        <h2 id="skStatCompleted">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHOPKEEPER TABS -->
+            <div class="sk-tab-navigation">
+                <button class="sk-nav-tab active" id="tabSkOrders" onclick="switchAdminTab('orders')">
+                    📋 Live Kitchen Orders (<span id="skOrdersTabCount">0</span>)
+                </button>
+                <button class="sk-nav-tab" id="tabSkMenu" onclick="switchAdminTab('menu')">
+                    🥐 Menu & Live Stock
+                </button>
+                <button class="sk-nav-tab" id="tabSkAnalytics" onclick="switchAdminTab('analytics')">
+                    📊 Sales Analytics
+                </button>
+                <button class="sk-nav-tab" id="tabSkSettings" onclick="switchAdminTab('settings')">
+                    ⚙️ Shop & UPI Settings
+                </button>
+            </div>
+
+            <!-- SUB-TAB 1: LIVE ORDERS -->
+            <div id="skTabPanelOrders" class="sk-tab-panel active">
+                <div class="sk-filter-action-bar">
+                    <div class="sk-filter-group">
+                        <button class="sk-filter-btn active" onclick="filterKitchenOrders('all', this)">All</button>
+                        <button class="sk-filter-btn" onclick="filterKitchenOrders('Pending', this)">New / Pending</button>
+                        <button class="sk-filter-btn" onclick="filterKitchenOrders('Baking', this)">Baking 🎂</button>
+                        <button class="sk-filter-btn" onclick="filterKitchenOrders('Out for Delivery', this)">Out for Delivery 🚚</button>
+                        <button class="sk-filter-btn" onclick="filterKitchenOrders('Delivered', this)">Delivered ✅</button>
+                    </div>
+                    <button class="sk-refresh-btn" onclick="renderKitchenOrders()">🔄 Refresh Orders</button>
+                </div>
+
+                <div id="skKitchenOrdersGrid" class="sk-orders-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- SUB-TAB 2: MENU & STOCK -->
+            <div id="skTabPanelMenu" class="sk-tab-panel">
+                <div class="sk-menu-header-bar">
+                    <h3>Bakery Products Catalog (<span id="skMenuCount">0</span>)</h3>
+                    <button class="sk-primary-btn" onclick="openAddProductModal()">+ Add New Product</button>
+                </div>
+                <div class="sk-table-container">
+                    <table class="sk-data-table">
+                        <thead>
+                            <tr>
+                                <th>Product Item</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Diet</th>
+                                <th>Live Stock Toggle</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="skMenuTableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 3: SALES ANALYTICS -->
+            <div id="skTabPanelAnalytics" class="sk-tab-panel">
+                <div class="sk-analytics-card">
+                    <h3>Product-Wise Sales & Revenue Breakdown</h3>
+                    <div id="skAnalyticsTableContainer" class="sk-table-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 4: SHOP SETTINGS -->
+            <div id="skTabPanelSettings" class="sk-tab-panel">
+                <div class="sk-settings-card">
+                    <h3>Configure Bakery & UPI Payment Settings</h3>
+                    <p>Changes saved here broadcast instantly to all customers.</p>
+
+                    <div class="sk-settings-form">
+                        <label>UPI Payee Name</label>
+                        <input type="text" id="cfgPayeeName" value="Muthukrishnan S">
+
+                        <label>UPI VPA ID (For QR Code & Mobile UPI Apps)</label>
+                        <input type="text" id="cfgUpiId" value="muthukrishnans2002@okhdfcbank">
+
+                        <label>Bank & Branch Tag</label>
+                        <input type="text" id="cfgBankTag" value="Indian Bank • 4189">
+
+                        <label>Bakery WhatsApp Number (With 91 country code)</label>
+                        <input type="tel" id="cfgPhone" value="919876543210">
+
+                        <label>Standard Delivery Fee (₹)</label>
+                        <input type="number" id="cfgDeliveryFee" value="30">
+
+                        <label>Free Delivery Threshold (₹)</label>
+                        <input type="number" id="cfgFreeThreshold" value="499">
+
+                        <button class="sk-primary-btn save-cfg-btn" onclick="saveKitchenSettings()">
+                            💾 Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== MODAL: SHOPPING CART DRAWER ================= -->
+    <!-- ================================================================= -->
+    <div id="cartDrawerOverlay" class="cart-drawer-overlay" onclick="closeCartDrawer()">
+        <div class="cart-drawer-card" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div>
+                    <span class="drawer-sub">YOUR BASKET</span>
+                    <h2>Shopping Cart</h2>
+                </div>
+                <button class="drawer-close-btn" onclick="closeCartDrawer()">✕</button>
+            </div>
+
+            <!-- FREE DELIVERY BAR -->
+            <div class="free-delivery-tracker">
+                <div class="tracker-text" id="drawerFreeDeliveryText">
+                    Add ₹499 for <strong>Free Delivery!</strong>
+                </div>
+                <div class="tracker-track">
+                    <div class="tracker-progress" id="drawerFreeDeliveryProgress" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- CART ITEMS LIST -->
+            <div id="cartDrawerItems" class="drawer-items-list">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <!-- DRAWER FOOTER -->
+            <div class="drawer-footer">
+                <div class="coupon-box-row">
+                    <input type="text" id="drawerCouponInput" placeholder="Coupon (e.g. SWEET10)" style="text-transform: uppercase;">
+                    <button type="button" onclick="applyStoreCoupon()">Apply</button>
+                </div>
+                <div id="drawerCouponMsg" class="coupon-msg-line"></div>
+
+                <div class="drawer-bill-summary">
+                    <div class="bill-line">
+                        <span>Subtotal</span>
+                        <span id="drawerSubtotal">₹0</span>
+                    </div>
+                    <div class="bill-line discount-color" id="drawerDiscountRow" style="display:none;">
+                        <span>Coupon Savings <small id="drawerCouponBadge"></small></span>
+                        <span id="drawerDiscount">-₹0</span>
+                    </div>
+                    <div class="bill-line total-highlight">
+                        <strong>Grand Total</strong>
+                        <strong id="drawerGrandTotal">₹0</strong>
+                    </div>
+                </div>
+
+                <button class="drawer-checkout-btn" onclick="proceedToCheckoutFromDrawer()">
+                    Proceed to Checkout →
+                </button>
+            </div>
         </div>
     </div>
 
 
-    <!-- ============================================================= -->
-    <!-- ================= 1. CUSTOMER PORTAL SECTION ================ -->
-    <!-- ============================================================= -->
-    <div id="customerPortalRoot">
-
-        <!-- ANNOUNCEMENT BANNER -->
-        <div class="announcement-bar">
-            <span>🎉 Fresh Artisanal Bakery! Use code <strong>SWEET10</strong> for 10% OFF | Free delivery above ₹499!</span>
-        </div>
-
-        <!-- CUSTOMER NAVBAR -->
-        <header class="navbar">
-            <div class="logo" onclick="goToSection('home')">
-                <div class="logo-icon">✦</div>
+    <!-- ================================================================= -->
+    <!-- =================== MODAL: MY ORDERS HISTORY ==================== -->
+    <!-- ================================================================= -->
+    <div id="ordersModalOverlay" class="orders-modal-overlay" onclick="closeOrdersModal()">
+        <div class="orders-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
                 <div>
-                    <h2>Smart Bakes</h2>
-                    <small>PREMIUM BAKERY & CAFE</small>
-                </div>
-            </div>
-
-            <nav>
-                <a href="#home" onclick="goToSection('home')">Home</a>
-                <a href="#menu" onclick="goToSection('menu')">Menu</a>
-                <a href="javascript:void(0)" onclick="openOrdersModal()">My Orders <span id="ordersBadge" class="nav-badge" style="display:none;">0</span></a>
-                <a href="#footer" onclick="goToSection('footer')">Contact</a>
-            </nav>
-
-            <div class="nav-actions">
-                <button class="nav-btn orders-icon-btn" onclick="openOrdersModal()" title="My Orders">
-                    📋 <span class="btn-text">My Orders</span>
-                </button>
-                <button class="cart-btn" onclick="openCart()" title="View Cart">
-                    🛒
-                    <span id="cartCount">0</span>
-                </button>
-            </div>
-        </header>
-
-        <!-- CUSTOMER PAGES -->
-        <main id="customerMainContent">
-
-            <!-- HERO -->
-            <section id="home" class="hero">
-                <div class="hero-content">
-                    <p>FRESH FROM THE OVEN DAILY</p>
-                    <h1>
-                        A Little Sweetness
-                        <br>
-                        <i>in Every Bite.</i>
-                    </h1>
-                    <span>
-                        Artisanal chocolate cakes, warm jam buns, crispy savoury puffs, and chilled refreshments crafted with premium ingredients.
-                    </span>
-                    <div class="hero-btns">
-                        <button class="hero-primary-btn" onclick="goToMenu()">
-                            Explore Menu ↓
-                        </button>
-                        <button class="hero-secondary-btn" onclick="openOrdersModal()">
-                            Track My Order 📦
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- MENU & FILTERS -->
-            <section class="menu" id="menu">
-                <div class="menu-header">
-                    <div class="menu-title">
-                        <p>OUR BAKERY MENU</p>
-                        <h1>Today's Fresh Picks</h1>
-                    </div>
-
-                    <div class="menu-search-wrapper">
-                        <input
-                            id="searchInput"
-                            type="text"
-                            placeholder="🔍 Search cakes, puffs, buns, drinks..."
-                            onkeyup="searchProducts()"
-                        >
-                    </div>
-                </div>
-
-                <!-- CATEGORY FILTER PILLS -->
-                <div class="category-filters" id="categoryFilters">
-                    <button class="filter-pill active" onclick="filterCategory('all', this)">✨ All Items</button>
-                    <button class="filter-pill" onclick="filterCategory('cakes', this)">🎂 Cakes</button>
-                    <button class="filter-pill" onclick="filterCategory('snacks', this)">🥟 Snacks & Puffs</button>
-                    <button class="filter-pill" onclick="filterCategory('buns', this)">🥐 Buns & Breads</button>
-                    <button class="filter-pill" onclick="filterCategory('drinks', this)">🥤 Beverages</button>
-                </div>
-
-                <!-- PRODUCTS GRID -->
-                <div id="productsGrid" class="products-grid"></div>
-            </section>
-
-            <!-- CHECKOUT VIEW -->
-            <section id="checkoutPage" class="checkout-page">
-                <div class="checkout-container">
-                    <button class="back-btn" onclick="backToShop()">
-                        ← Back to Menu
-                    </button>
-
-                    <div class="page-heading">
-                        <p>SMART BAKES</p>
-                        <h1>Delivery Details</h1>
-                        <span>Complete your delivery address & time preference</span>
-                    </div>
-
-                    <div class="checkout-grid">
-                        <!-- CUSTOMER DETAILS FORM -->
-                        <div class="details-card">
-                            <h2>Customer Information</h2>
-                            <p>Enter where you'd like your bakery items delivered</p>
-
-                            <label for="customerName">Full Name *</label>
-                            <input id="customerName" type="text" placeholder="e.g. Muthukrishnan S" required>
-
-                            <label for="customerPhone">Mobile Number (10 Digits) *</label>
-                            <input id="customerPhone" type="tel" maxlength="10" placeholder="e.g. 9876543210" required>
-
-                            <label for="customerAddress">Complete Delivery Address *</label>
-                            <textarea id="customerAddress" placeholder="Flat / House No, Street, Area, City, Pincode" required></textarea>
-
-                            <label for="deliveryTimeSlot">Preferred Delivery Slot</label>
-                            <select id="deliveryTimeSlot" class="custom-select">
-                                <option value="Immediate (Within 45 Mins)">⚡ Immediate (Within 45 Mins)</option>
-                                <option value="Evening (5:00 PM - 7:00 PM)">🌅 Today Evening (5:00 PM - 7:00 PM)</option>
-                                <option value="Night (7:00 PM - 9:00 PM)">🌙 Tonight (7:00 PM - 9:00 PM)</option>
-                                <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">☀️ Tomorrow Morning (8:00 AM - 10:00 AM)</option>
-                            </select>
-
-                            <label for="orderNote">Cake Message / Special Instructions <small>(Optional)</small></label>
-                            <textarea id="orderNote" placeholder="e.g. Please write 'Happy Birthday' on cake"></textarea>
-
-                            <button class="dark-btn" onclick="goToPayment()">
-                                Proceed to Payment →
-                            </button>
-                        </div>
-
-                        <!-- SUMMARY CARD -->
-                        <div class="summary-card">
-                            <h2>Order Summary</h2>
-                            <div id="checkoutItems" class="checkout-items-list"></div>
-
-                            <div class="summary-row">
-                                <span>Subtotal</span>
-                                <strong id="checkoutSubtotal">₹0</strong>
-                            </div>
-                            <div class="summary-row discount-text" id="checkoutDiscountRow" style="display:none;">
-                                <span>Coupon Discount</span>
-                                <strong id="checkoutDiscount">-₹0</strong>
-                            </div>
-                            <div class="summary-row">
-                                <span>Delivery Fee</span>
-                                <strong id="checkoutDeliveryFee">₹30</strong>
-                            </div>
-                            <div class="total-row">
-                                <span>Grand Total</span>
-                                <strong id="checkoutTotal">₹30</strong>
-                            </div>
-                            <div class="security-badge">
-                                🔒 100% Safe & Instant Real-Time Order Processing
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- PAYMENT VIEW -->
-            <section id="paymentPage" class="payment-page">
-                <div class="payment-container">
-                    <button class="back-btn" onclick="backToCheckout()">
-                        ← Back to Details
-                    </button>
-
-                    <div class="page-heading">
-                        <p>SMART BAKES</p>
-                        <h1>Payment Options</h1>
-                        <span>Scan & pay via UPI or choose Cash on Delivery</span>
-                    </div>
-
-                    <div class="payment-grid">
-                        <div class="payment-methods-card">
-                            <!-- TABS -->
-                            <div class="payment-tabs">
-                                <button class="pay-tab active" id="tabUpi" onclick="selectPaymentMethod('upi')">
-                                    📱 UPI / QR Code
-                                </button>
-                                <button class="pay-tab" id="tabCod" onclick="selectPaymentMethod('cod')">
-                                    💵 Cash on Delivery
-                                </button>
-                            </div>
-
-                            <!-- UPI SECTION (CLEAN CROPPED QR CODE ONLY) -->
-                            <div id="upiPaymentSection" class="payment-section-box">
-                                <div class="qr-header-banner">
-                                    <span class="upi-live-badge">🟢 Instant UPI Verification</span>
-                                    <h3>Scan QR Code to Pay</h3>
-                                    <p>Open Google Pay, PhonePe, Paytm, BHIM or any UPI App</p>
-                                </div>
-
-                                <!-- CLEAN CROPPED QR MATRIX -->
-                                <div class="clean-qr-frame">
-                                    <img
-                                        id="uploadedQrImage"
-                                        src="qr-only.jpg"
-                                        onerror="this.onerror=null; this.src='assets/qr-only.jpg'"
-                                        alt="Smart Bakes UPI QR Code"
-                                        class="clean-qr-img"
-                                    >
-                                </div>
-
-                                <div class="upi-details-card">
-                                    <div class="upi-account-info">
-                                        <div class="upi-avatar">👤</div>
-                                        <div>
-                                            <h4 id="upiPayeeNameDisplay">Muthukrishnan S</h4>
-                                            <p class="bank-tag" id="upiBankTagDisplay">🏦 Indian Bank • 4189</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="upi-id-box">
-                                        <div>
-                                            <small>UPI ID</small>
-                                            <strong id="upiIdTextDisplay">muthukrishnans2002@okhdfcbank</strong>
-                                        </div>
-                                        <button class="copy-upi-btn" onclick="copyUpiId()" title="Copy UPI ID">
-                                            📋 Copy
-                                        </button>
-                                    </div>
-
-                                    <a
-                                        id="payViaUpiAppBtn"
-                                        class="upi-direct-btn"
-                                        href="upi://pay?pa=muthukrishnans2002@okhdfcbank&pn=Muthukrishnan%20S&cu=INR"
-                                    >
-                                        🚀 Pay Directly via UPI App
-                                    </a>
-                                </div>
-
-                                <div class="utr-input-box">
-                                    <label for="transactionUtr">
-                                        UPI Reference / UTR No. <small>(Optional for instant auto-matching)</small>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="transactionUtr"
-                                        placeholder="e.g. 428192837192 (12 digits)"
-                                        maxlength="16"
-                                    >
-                                </div>
-                            </div>
-
-                            <!-- COD SECTION -->
-                            <div id="codPaymentSection" class="payment-section-box" style="display: none;">
-                                <div class="cod-banner">
-                                    <div class="cod-icon">💵</div>
-                                    <h3>Cash on Delivery</h3>
-                                    <p>Pay with cash or scan delivery partner QR code when your order arrives at your door.</p>
-                                    <div class="cod-notice">
-                                        ℹ️ Please keep exact change ready for smooth handover!
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- PAYMENT SUMMARY -->
-                        <div class="summary-card">
-                            <h2>Order Payable</h2>
-                            <div id="paymentItems" class="checkout-items-list"></div>
-
-                            <div class="summary-row">
-                                <span>Items Subtotal</span>
-                                <strong id="paymentSubtotal">₹0</strong>
-                            </div>
-                            <div class="summary-row discount-text" id="paymentDiscountRow" style="display:none;">
-                                <span>Coupon Discount</span>
-                                <strong id="paymentDiscount">-₹0</strong>
-                            </div>
-                            <div class="summary-row">
-                                <span>Delivery Fee</span>
-                                <strong id="paymentDeliveryFee">₹30</strong>
-                            </div>
-                            <div class="total-row">
-                                <span>Total Payable Amount</span>
-                                <strong id="paymentTotal">₹0</strong>
-                            </div>
-
-                            <button id="confirmPaymentBtn" class="dark-btn confirm-order-btn" onclick="paymentCompleted()">
-                                ✓ Confirm Order & Complete
-                            </button>
-                            <p class="trust-note">
-                                ⚡ Order will be sent instantly to the bakery kitchen!
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ORDER CONFIRMATION / SUCCESS VIEW -->
-            <section id="successPage" class="success-page">
-                <div class="success-card">
-                    <div class="success-icon-wrapper">
-                        <div class="success-icon">✓</div>
-                    </div>
-                    <p class="brand-tag">SMART BAKES • ORDER PLACED</p>
-                    <h1>Order Received by Kitchen!</h1>
-                    <span class="success-subtext">
-                        Your order has been transmitted in real time to the shopkeeper portal.
-                    </span>
-
-                    <!-- LIVE ORDER TRACKER -->
-                    <div class="order-tracker" id="liveOrderTrackerBar">
-                        <div class="tracker-step completed" id="stepReceived">
-                            <div class="step-circle">1</div>
-                            <small>Received</small>
-                        </div>
-                        <div class="tracker-line" id="line1"></div>
-                        <div class="tracker-step" id="stepBaking">
-                            <div class="step-circle">2</div>
-                            <small>Baking</small>
-                        </div>
-                        <div class="tracker-line" id="line2"></div>
-                        <div class="tracker-step" id="stepDelivery">
-                            <div class="step-circle">3</div>
-                            <small>Out for Delivery</small>
-                        </div>
-                        <div class="tracker-line" id="line3"></div>
-                        <div class="tracker-step" id="stepDelivered">
-                            <div class="step-circle">4</div>
-                            <small>Delivered</small>
-                        </div>
-                    </div>
-
-                    <div id="successDetails" class="success-details"></div>
-
-                    <div class="success-actions">
-                        <button id="whatsappOrderBtn" class="whatsapp-btn" onclick="sendOrderToWhatsApp()">
-                            💬 Send Order to Bakery WhatsApp
-                        </button>
-                        <button class="print-invoice-btn" onclick="printOrderReceipt()">
-                            🖨️ Print / Save Receipt
-                        </button>
-                    </div>
-
-                    <button class="dark-btn continue-shopping-btn" onclick="backToShop()">
-                        ← Back to Store Menu
-                    </button>
-                </div>
-            </section>
-
-        </main>
-
-        <!-- CART SLIDEOUT DRAWER -->
-        <div id="cartOverlay" class="cart-overlay" onclick="closeCart()">
-            <div class="cart-box" onclick="event.stopPropagation()">
-                <div class="cart-header">
-                    <div>
-                        <p>YOUR BASKET</p>
-                        <h2>Shopping Cart</h2>
-                    </div>
-                    <button class="close-cart-btn" onclick="closeCart()">✕</button>
-                </div>
-
-                <div class="free-delivery-box">
-                    <div class="progress-text" id="freeDeliveryText">
-                        Add ₹499 for <strong>Free Delivery!</strong>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="freeDeliveryProgress" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div id="cartItems" class="cart-items"></div>
-
-                <div class="cart-footer">
-                    <div class="coupon-section">
-                        <div class="coupon-input-group">
-                            <input type="text" id="cartCouponInput" placeholder="Coupon (e.g. SWEET10)" style="text-transform: uppercase;">
-                            <button type="button" onclick="applyCoupon()">Apply</button>
-                        </div>
-                        <div id="couponMessage" class="coupon-feedback"></div>
-                    </div>
-
-                    <div class="cart-bill-summary">
-                        <div class="bill-row">
-                            <span>Subtotal</span>
-                            <span id="cartSubtotal">₹0</span>
-                        </div>
-                        <div class="bill-row discount-row" id="cartDiscountRow" style="display:none;">
-                            <span>Discount <small id="couponCodeBadge"></small></span>
-                            <span id="cartDiscountAmount">-₹0</span>
-                        </div>
-                        <div class="bill-row total-bill-row">
-                            <strong>Total Amount</strong>
-                            <strong id="cartTotal">₹0</strong>
-                        </div>
-                    </div>
-
-                    <button class="checkout-btn" onclick="checkout()">
-                        Proceed to Checkout →
-                    </button>
-                        <!-- UPI DETAILS & COPY ACTION -->
-                        <div class="upi-details-card">
-                            <div class="upi-account-info">
-                                <div class="upi-avatar">👤</div>
-                                <div>
-                                    <h4 id="upiPayeeName">Muthukrishnan S</h4>
-                                    <p class="bank-tag">🏦 Indian Bank • 4189</p>
-                                </div>
-                            </div>
-
-                            <div class="upi-id-box">
-                                <div>
-                                    <small>UPI ID</small>
-                                    <strong id="upiIdText">muthukrishnans2002@okhdfcbank</strong>
-                                </div>
-                                <button class="copy-upi-btn" onclick="copyUpiId()" title="Copy UPI ID">
-                                    📋 Copy
-                                </button>
-                            </div>
-
-                            <!-- DIRECT MOBILE APP INTENT LINK -->
-                            <a
-                                id="payViaUpiAppBtn"
-                                class="upi-direct-btn"
-                                href="upi://pay?pa=muthukrishnans2002@okhdfcbank&pn=Muthukrishnan%20S&cu=INR"
-                            >
-                                🚀 Pay Directly via UPI App
-                            </a>
-                        </div>
-
-                        <!-- OPTIONAL TRANSACTION REFERENCE -->
-                        <div class="utr-input-box">
-                            <label for="transactionUtr">
-                                UPI Ref / UTR No. <small>(Optional for instant matching)</small>
-                            </label>
-                            <input
-                                type="text"
-                                id="transactionUtr"
-                                placeholder="e.g. 423871928371 (12 digits)"
-                                maxlength="16"
-                            >
-                        </div>
-
-                    </div>
-
-                    <!-- CASH ON DELIVERY CONTAINER -->
-                    <div id="codPaymentSection" class="payment-section-box" style="display: none;">
-                        <div class="cod-banner">
-                            <div class="cod-icon">💵</div>
-                            <h3>Cash on Delivery</h3>
-                            <p>Pay with cash or UPI directly to our delivery partner when your warm bakery order arrives at your door.</p>
-                            <div class="cod-notice">
-                                ℹ️ Please keep exact change ready for a faster handover!
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-
-
-                <!-- PAYMENT ORDER SUMMARY -->
-                <div class="summary-card">
-
-                    <h2>Order Payable</h2>
-
-                    <div id="paymentItems" class="checkout-items-list"></div>
-
-                    <div class="summary-row">
-                        <span>Items Subtotal</span>
-                        <strong id="paymentSubtotal">₹0</strong>
-                    </div>
-
-                    <div class="summary-row discount-text" id="paymentDiscountRow" style="display:none;">
-                        <span>Coupon Discount</span>
-                        <strong id="paymentDiscount">-₹0</strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Delivery Fee</span>
-                        <strong id="paymentDeliveryFee">₹30</strong>
-                    </div>
-
-                    <div class="total-row">
-                        <span>Total Payable Amount</span>
-                        <strong id="paymentTotal">₹0</strong>
-                    </div>
-
-                    <button
-                        id="confirmPaymentBtn"
-                        class="dark-btn confirm-order-btn"
-                        onclick="paymentCompleted()"
-                    >
-                        ✓ Confirm Order & Complete
-                    </button>
-
-                    <p class="trust-note">
-                        🔒 By placing order you agree to Smart Bakes delivery terms.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- SUCCESS / ORDER CONFIRMATION PAGE -->
-    <section
-        id="successPage"
-        class="success-page"
-    >
-
-        <div class="success-card">
-
-            <div class="success-icon-wrapper">
-                <div class="success-icon">✓</div>
-            </div>
-
-            <p class="brand-tag">SMART BAKES • ORDER CONFIRMED</p>
-
-            <h1>Thank You for Your Order!</h1>
-
-            <span class="success-subtext">
-                Your treats are being prepared with extra care. We've recorded your order details below.
-            </span>
-
-            <!-- LIVE ORDER PROGRESS BAR -->
-            <div class="order-tracker">
-                <div class="tracker-step completed">
-                    <div class="step-circle">1</div>
-                    <small>Received</small>
-                </div>
-                <div class="tracker-line completed"></div>
-                <div class="tracker-step active">
-                    <div class="step-circle">2</div>
-                    <small>Baking</small>
-                </div>
-                <div class="tracker-line"></div>
-                <div class="tracker-step">
-                    <div class="step-circle">3</div>
-                    <small>Out for Delivery</small>
-                </div>
-                <div class="tracker-line"></div>
-                <div class="tracker-step">
-                    <div class="step-circle">4</div>
-                    <small>Delivered</small>
-                </div>
-            </div>
-
-
-            <!-- INVOICE / ORDER RECEIPT DETAILS -->
-            <div
-                id="successDetails"
-                class="success-details"
-            >
-            </div>
-
-
-            <!-- ACTIONS: WHATSAPP DISPATCH & PRINT -->
-            <div class="success-actions">
-                <button
-                    id="whatsappOrderBtn"
-                    class="whatsapp-btn"
-                    onclick="sendOrderToWhatsApp()"
-                >
-                    💬 Send Order to Bakery WhatsApp
-                </button>
-
-                <button
-                    class="print-invoice-btn"
-                    onclick="printOrderReceipt()"
-                >
-                    🖨️ Print / Save Receipt
-                </button>
-            </div>
-
-            <button
-                class="dark-btn continue-shopping-btn"
-                onclick="backToShop()"
-            >
-                ← Continue Shopping
-            </button>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- MY ORDERS MODAL -->
-    <div id="ordersModal" class="orders-modal-overlay" onclick="closeOrdersModal()">
-        <div class="orders-modal-box" onclick="event.stopPropagation()">
-            <div class="orders-modal-header">
-                <div>
-                    <p>YOUR RECENT ORDERS</p>
+                    <span class="drawer-sub">YOUR PREVIOUS ORDERS</span>
                     <h2>Order History & Status</h2>
                 </div>
-                <button class="close-cart-btn" onclick="closeOrdersModal()">✕</button>
+                <button class="drawer-close-btn" onclick="closeOrdersModal()">✕</button>
             </div>
-
-            <div id="ordersList" class="orders-list-container">
+            <div id="ordersModalList" class="orders-history-container">
                 <!-- Populated dynamically via JS -->
             </div>
         </div>
     </div>
 
 
+    <!-- ================================================================= -->
+    <!-- =================== MODAL: ADD PRODUCT ========================== -->
+    <!-- ================================================================= -->
+    <div id="addProductModalOverlay" class="orders-modal-overlay" onclick="closeAddProductModal()">
+        <div class="orders-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="drawer-sub">INVENTORY</span>
+                    <h2>Add New Bakery Item</h2>
+                </div>
+                <button class="drawer-close-btn" onclick="closeAddProductModal()">✕</button>
+            </div>
+            <form onsubmit="handleAddNewProduct(event)" class="add-product-form">
+                <label>Item Name *</label>
+                <input type="text" id="addProdName" required placeholder="e.g. Red Velvet Pastry">
 
-    <!-- FOOTER -->
-    <footer id="footer">
+                <label>Category *</label>
+                <select id="addProdCat" class="form-select">
+                    <option value="cakes">🎂 Cakes</option>
+                    <option value="snacks">🥟 Snacks & Puffs</option>
+                    <option value="buns">🥐 Buns & Breads</option>
+                    <option value="drinks">🥤 Beverages</option>
+                </select>
 
-        <div class="footer-grid">
-            <div class="footer-col">
-                <h2>✦ Smart Bakes</h2>
-                <p>Freshness you can taste. Happiness you can share. Fresh artisanal baked goodness delivered to your doorstep.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Quick Links</h4>
-                <a href="#menu" onclick="goToSection('menu')">Our Menu</a>
-                <a href="javascript:void(0)" onclick="openOrdersModal()">Track Orders</a>
-                <a href="order.html">Direct WhatsApp Order Form</a>
-            </div>
-            <div class="footer-col">
-                <h4>Contact & Payment</h4>
-                <p>📍 Smart Bakes Bakery Street</p>
-                <p>📞 +91 98765 43210</p>
-                <p>💳 UPI: muthukrishnans2002@okhdfcbank</p>
-            </div>
+                <label>Price (₹) *</label>
+                <input type="number" id="addProdPrice" required min="1" placeholder="e.g. 150">
+
+                <label>Image URL</label>
+                <input type="url" id="addProdImg" placeholder="https://images.unsplash.com/...">
+
+                <label>Short Description</label>
+                <textarea id="addProdDesc" rows="2" placeholder="Delicious handmade specialty"></textarea>
+
+                <label>Dietary</label>
+                <select id="addProdDiet" class="form-select">
+                    <option value="true">🟢 Pure Vegetarian</option>
+                    <option value="false">🔴 Non-Vegetarian</option>
+                </select>
+
+                <button type="submit" class="sk-primary-btn full-btn">+ Add Item to Menu</button>
+            </form>
         </div>
-
-        <div class="footer-bottom">
-            <small>© 2026 Smart Bakes. Handcrafted with ❤️ for pastry lovers.</small>
-        </div>
-
-    </footer>
-
+    </div>
 
     <script src="script.js"></script>
-
 </body>
-
 </html>
