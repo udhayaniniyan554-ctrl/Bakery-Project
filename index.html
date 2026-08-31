@@ -23,10 +23,10 @@
             <span class="portal-sub-text">Rayarpalayam, Namakkal - Tiruchengode Hwy</span>
         </div>
         <div class="portal-nav-right">
-            <button id="navBtnLanding" class="nav-portal-btn" onclick="showView('landing')">
-                🏠 Home
+            <button id="navBtnLanding" class="nav-portal-btn active" onclick="showView('landing')">
+                🏠 Home Portals
             </button>
-            <button id="navBtnCustomer" class="nav-portal-btn active" onclick="showView('customer')">
+            <button id="navBtnCustomer" class="nav-portal-btn" onclick="showView('customer')">
                 🛍️ Customer Store
             </button>
             <button id="navBtnShopkeeper" class="nav-portal-btn" onclick="openShopkeeperAuthModal()">
@@ -39,12 +39,12 @@
     <!-- ================================================================= -->
     <!-- =================== VIEW 1: HOME PORTAL LANDING ================= -->
     <!-- ================================================================= -->
-    <section id="viewLanding" class="app-view">
+    <section id="viewLanding" class="app-view active">
         <div class="landing-hero-container">
             <div class="landing-top-badge">👑 ROYAL BAKES • ARTISANAL BAKERY & CAFE</div>
             <h1>Freshness You Can Taste.<br><i>Happiness in Every Bite.</i></h1>
             <p class="landing-loc-text">📍 Namakkal - Tiruchengode Highways, Rayarpalayam | 📞 +91 6374334421</p>
-            <p class="landing-sub-text">Welcome to the official Royal Bakes digital portal. Please select your portal below:</p>
+            <p class="landing-sub-text">Welcome to the official Royal Bakes digital portal. Choose your portal below to continue:</p>
 
             <div class="portal-choice-grid">
                 <!-- CUSTOMER CHOICE CARD -->
@@ -52,11 +52,11 @@
                     <div class="choice-badge">SHOP ONLINE</div>
                     <div class="choice-icon">🛍️</div>
                     <h2>Customer Store</h2>
-                    <p>Browse 20+ fresh chocolate cakes, crispy puffs, buns & beverages. Order online with instant UPI QR & live SMS/WhatsApp order updates.</p>
+                    <p>Browse fresh chocolate cakes, savoury puffs, buns & beverages. Check live stock, order online with instant UPI QR & track orders in real time.</p>
                     <div class="choice-features">
-                        <span>✓ Live Stock Status</span>
+                        <span>✓ Live Bakery Stock</span>
                         <span>✓ Instant UPI QR Payment</span>
-                        <span>✓ Digital Ticket Receipt</span>
+                        <span>✓ Real-Time SMS & Order Tracker</span>
                     </div>
                     <button class="choice-btn primary">Enter Customer Store →</button>
                 </div>
@@ -66,13 +66,13 @@
                     <div class="choice-badge staff-badge">STAFF ONLY</div>
                     <div class="choice-icon">🏪</div>
                     <h2>Shopkeeper / Kitchen Portal</h2>
-                    <p>Protected bakery staff dashboard for receiving live orders, kitchen status updates, menu pricing, stock toggle, and revenue reports.</p>
+                    <p>Protected bakery staff dashboard for receiving real-time live orders, kitchen audio chimes, 1-click stock toggles, and revenue reports.</p>
                     <div class="choice-features">
                         <span>✓ Real-time Order Audio Chime</span>
-                        <span>✓ 1-Click Stock Toggle</span>
-                        <span>✓ Revenue & Sales Analytics</span>
+                        <span>✓ In-Stock / Out-of-Stock Toggle</span>
+                        <span>✓ Sales & Revenue Breakdown</span>
                     </div>
-                    <button class="choice-btn secondary">Staff Login →</button>
+                    <button class="choice-btn secondary">Staff Login (muthu_royal) →</button>
                 </div>
             </div>
         </div>
@@ -82,7 +82,7 @@
     <!-- ================================================================= -->
     <!-- =================== VIEW 2: CUSTOMER STORE ====================== -->
     <!-- ================================================================= -->
-    <section id="viewCustomer" class="app-view active">
+    <section id="viewCustomer" class="app-view">
 
         <!-- ANNOUNCEMENT BANNER -->
         <div class="announcement-banner">
@@ -107,7 +107,7 @@
                 <a href="javascript:void(0)" onclick="openOrdersModal()">
                     My Orders <span id="customerOrdersCountBadge" class="nav-item-badge" style="display:none;">0</span>
                 </a>
-                <a href="javascript:void(0)" onclick="openShopkeeperAuthModal()">🏪 Kitchen Staff</a>
+                <a href="javascript:void(0)" onclick="openShopkeeperAuthModal()">🏪 Staff Portal</a>
             </div>
 
             <div class="store-nav-actions">
@@ -197,7 +197,7 @@
 
 
     <!-- ================================================================= -->
-    <!-- =================== VIEW 3: CHECKOUT PAGE ======================= -->
+    <!-- =================== VIEW 3: CHECKOUT PAGE (MINIMAL & SLEEK) ====== -->
     <!-- ================================================================= -->
     <section id="viewCheckout" class="app-view">
         <div class="checkout-page-wrapper">
@@ -206,9 +206,9 @@
             </button>
 
             <div class="checkout-header-block">
-                <span class="checkout-tag">ROYAL BAKES CHECKOUT</span>
-                <h1>Delivery & Payment Details</h1>
-                <p>Complete your address in Rayarpalayam / Namakkal and choose your payment method</p>
+                <span class="checkout-tag">ROYAL BAKES • EASY CHECKOUT</span>
+                <h1>Delivery & Payment</h1>
+                <p>Complete your delivery details and choose instant payment</p>
             </div>
 
             <div class="checkout-two-col-grid">
@@ -216,30 +216,40 @@
                 <!-- LEFT COL: CUSTOMER & PAYMENT FORM -->
                 <div class="checkout-form-column">
 
-                    <!-- STEP 1: CUSTOMER DETAILS -->
+                    <!-- STEP 1: MINIMAL CUSTOMER DETAILS -->
                     <div class="form-section-card">
                         <div class="card-step-badge">Step 1</div>
-                        <h3>Customer & Delivery Address</h3>
+                        <h3>Customer Information</h3>
 
-                        <label for="chkName">Full Name *</label>
-                        <input type="text" id="chkName" placeholder="e.g. Muthukrishnan S" required>
+                        <div class="form-row-grid">
+                            <div>
+                                <label for="chkName">Your Full Name *</label>
+                                <input type="text" id="chkName" placeholder="e.g. Muthukrishnan S" required>
+                            </div>
+                            <div>
+                                <label for="chkPhone">Mobile Number (10 Digits) *</label>
+                                <input type="tel" id="chkPhone" maxlength="10" placeholder="e.g. 9876543210" required>
+                            </div>
+                        </div>
 
-                        <label for="chkPhone">Mobile Number (10 Digits) *</label>
-                        <input type="tel" id="chkPhone" maxlength="10" placeholder="e.g. 9876543210" required>
+                        <label for="chkAddress">Delivery Address *</label>
+                        <textarea id="chkAddress" rows="2" placeholder="Door No, Street, Landmark, Rayarpalayam / Namakkal Area" required></textarea>
 
-                        <label for="chkAddress">Complete Delivery Address *</label>
-                        <textarea id="chkAddress" rows="3" placeholder="Door No, Street, Landmark, Rayarpalayam / Namakkal Area" required></textarea>
-
-                        <label for="chkSlot">Preferred Delivery Slot</label>
-                        <select id="chkSlot" class="form-select">
-                            <option value="Immediate (Within 45 Mins)">⚡ Immediate (Within 45 Mins)</option>
-                            <option value="Today Evening (5:00 PM - 7:00 PM)">🌅 Today Evening (5:00 PM - 7:00 PM)</option>
-                            <option value="Tonight (7:00 PM - 9:00 PM)">🌙 Tonight (7:00 PM - 9:00 PM)</option>
-                            <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">☀️ Tomorrow Morning (8:00 AM - 10:00 AM)</option>
-                        </select>
-
-                        <label for="chkNote">Special Instructions / Cake Inscription <small>(Optional)</small></label>
-                        <input type="text" id="chkNote" placeholder="e.g. Please write 'Happy Birthday' on chocolate cake">
+                        <div class="form-row-grid">
+                            <div>
+                                <label for="chkSlot">Delivery Time Slot</label>
+                                <select id="chkSlot" class="form-select">
+                                    <option value="Immediate (Within 45 Mins)">⚡ Immediate (Within 45 Mins)</option>
+                                    <option value="Today Evening (5:00 PM - 7:00 PM)">🌅 Today Evening (5:00 PM - 7:00 PM)</option>
+                                    <option value="Tonight (7:00 PM - 9:00 PM)">🌙 Tonight (7:00 PM - 9:00 PM)</option>
+                                    <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">☀️ Tomorrow Morning (8:00 AM - 10:00 AM)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="chkNote">Cake Inscription / Note</label>
+                                <input type="text" id="chkNote" placeholder="e.g. Write 'Happy Birthday'">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- STEP 2: PAYMENT OPTIONS -->

@@ -102,6 +102,15 @@ let currentStoreCategory = "all";
 let currentKitchenFilter = "all";
 let isShopkeeperLoggedIn = false;
 
+// BroadcastChannel for instant multi-tab real time synchronization
+let royalChannel = null;
+try {
+    royalChannel = new BroadcastChannel("royalbakes_realtime_sync");
+    royalChannel.onmessage = (ev) => {
+        handleRealTimeBroadcast(ev.data);
+    };
+} catch (e) {}
+
 /* ================================================================= */
 /* ===================== VIEW MANAGEMENT =========================== */
 /* ================================================================= */
@@ -556,13 +565,18 @@ function submitFinalOrder() {
 
     currentOrder = newOrder;
 
-    // Save order
+    // Save order to LocalStorage
     let orders = [];
     try {
         orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
     orders.unshift(newOrder);
     localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
+
+    // Broadcast in real-time across tabs/windows
+    if (royalChannel) {
+        royalChannel.postMessage({ type: "NEW_ORDER", order: newOrder });
+    }
 
     // Reset cart
     cart = [];
@@ -574,7 +588,7 @@ function submitFinalOrder() {
     showView("success");
     playOrderChimeSound();
     updateCustomerBadges();
-    showToast("Order transmitted to Kitchen Dashboard! 🎂", "success");
+    showToast("Order transmitted to Royal Bakes Kitchen! 🎂", "success");
 }
 
 /* ================================================================= */
@@ -668,7 +682,6 @@ function dispatchOrderToSMS() {
     const itemsText = currentOrder.items.map(i => `${i.name}(x${i.quantity})`).join(", ");
     const smsBody = `ROYAL BAKES ORDER: #${currentOrder.orderId} | Cust: ${currentOrder.customerName} (${currentOrder.customerPhone}) | Loc: ${currentOrder.address} | Items: ${itemsText} | Total: Rs.${currentOrder.total} | Pay: ${currentOrder.paymentMethod}`;
 
-    // Universal mobile SMS intent link
     window.location.href = `sms:${phone}?&body=${encodeURIComponent(smsBody)}`;
     showToast("Opening SMS to send order to +91 6374334421 📲", "info");
 }
@@ -716,11 +729,17 @@ function renderKitchenStats() {
     const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
     const completedCount = orders.filter(o => o.status === "Delivered").length;
 
-    document.getElementById("skStatRevenue").textContent = `₹${totalRevenue}`;
-    document.getElementById("skStatTotal").textContent = orders.length;
-    document.getElementById("skStatPending").textContent = pendingCount;
-    document.getElementById("skStatCompleted").textContent = completedCount;
-    document.getElementById("skOrdersTabCount").textContent = orders.length;
+    const rEl = document.getElementById("skStatRevenue");
+    const tEl = document.getElementById("skStatTotal");
+    const pEl = document.getElementById("skStatPending");
+    const cEl = document.getElementById("skStatCompleted");
+    const tabCount = document.getElementById("skOrdersTabCount");
+
+    if (rEl) rEl.textContent = `₹${totalRevenue}`;
+    if (tEl) tEl.textContent = orders.length;
+    if (pEl) pEl.textContent = pendingCount;
+    if (cEl) cEl.textContent = completedCount;
+    if (tabCount) tabCount.textContent = orders.length;
 }
 
 function switchAdminTab(tab) {
@@ -842,6 +861,12 @@ function setOrderStatus(orderId, newStatus) {
     if (order) {
         order.status = newStatus;
         localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
+        
+        // Broadcast in real-time across tabs
+        if (royalChannel) {
+            royalChannel.postMessage({ type: "STATUS_UPDATE", orderId, status: newStatus });
+        }
+
         showToast(`Order #${orderId} set to: ${newStatus} ⚡`, "success");
         renderKitchenStats();
         renderKitchenOrders();
@@ -899,6 +924,11 @@ function toggleKitchenStock(prodId) {
 
     stockMap[prodId] = stockMap[prodId] === false ? true : false;
     localStorage.setItem("royalbakes_stock_status", JSON.stringify(stockMap));
+    
+    if (royalChannel) {
+        royalChannel.postMessage({ type: "STOCK_UPDATE", prodId, inStock: stockMap[prodId] });
+    }
+
     showToast(`Stock updated for item #${prodId} 🔄`, "info");
     renderKitchenMenuTable();
     renderStoreProducts();
@@ -939,6 +969,10 @@ function handleAddNewProduct(e) {
     custom.push(newProd);
     localStorage.setItem("royalbakes_custom_products", JSON.stringify(custom));
 
+    if (royalChannel) {
+        royalChannel.postMessage({ type: "PRODUCT_ADDED", product: newProd });
+    }
+
     showToast(`Added '${name}' to Bakery Menu! 🎂`, "success");
     closeAddProductModal();
     renderKitchenMenuTable();
@@ -953,6 +987,11 @@ function deleteKitchenProduct(prodId) {
     } catch (e) {}
     custom = custom.filter(p => p.id !== prodId);
     localStorage.setItem("royalbakes_custom_products", JSON.stringify(custom));
+    
+    if (royalChannel) {
+        royalChannel.postMessage({ type: "PRODUCT_DELETED", prodId });
+    }
+
     showToast("Product deleted 🗑️", "info");
     renderKitchenMenuTable();
     renderStoreProducts();
@@ -1037,12 +1076,19 @@ function applySettingsToUI() {
     } catch (e) {}
 
     if (s) {
-        document.getElementById("chkPayeeName").textContent = s.payeeName;
-        document.getElementById("chkUpiId").textContent = s.upiId;
-        document.getElementById("chkBankTag").textContent = `🏦 ${s.bankTag}`;
-        document.getElementById("chkDirectPayBtn").href = `upi://pay?pa=${s.upiId}&pn=${encodeURIComponent(s.payeeName)}&cu=INR`;
-        document.getElementById("footerContactUpi").textContent = `💳 UPI: ${s.upiId}`;
-        document.getElementById("footerContactPhone").textContent = `📞 +${s.phone}`;
+        const pEl = document.getElementById("chkPayeeName");
+        const uEl = document.getElementById("chkUpiId");
+        const bEl = document.getElementById("chkBankTag");
+        const btn = document.getElementById("chkDirectPayBtn");
+        const fU = document.getElementById("footerContactUpi");
+        const fP = document.getElementById("footerContactPhone");
+
+        if (pEl) pEl.textContent = s.payeeName;
+        if (uEl) uEl.textContent = s.upiId;
+        if (bEl) bEl.textContent = `🏦 ${s.bankTag}`;
+        if (btn) btn.href = `upi://pay?pa=${s.upiId}&pn=${encodeURIComponent(s.payeeName)}&cu=INR`;
+        if (fU) fU.textContent = `💳 UPI: ${s.upiId}`;
+        if (fP) fP.textContent = `📞 +${s.phone}`;
     }
 }
 
@@ -1162,8 +1208,31 @@ function playOrderChimeSound() {
 }
 
 /* ================================================================= */
-/* ================= MULTI-TAB STORAGE EVENT SYNC ================== */
+/* ================= REAL-TIME BROADCAST & STORAGE SYNC ============ */
 /* ================================================================= */
+function handleRealTimeBroadcast(data) {
+    if (!data) return;
+    if (data.type === "NEW_ORDER") {
+        renderKitchenStats();
+        renderKitchenOrders();
+        updateCustomerBadges();
+        playOrderChimeSound();
+        showToast(`🔔 New Incoming Order #${data.order.orderId}!`, "success");
+    } else if (data.type === "STATUS_UPDATE") {
+        renderKitchenStats();
+        renderKitchenOrders();
+        updateCustomerBadges();
+        if (currentOrder && String(currentOrder.orderId) === String(data.orderId)) {
+            currentOrder.status = data.status;
+            updateTimelineState(data.status);
+            showToast(`Order status updated to: ${data.status} 🚚`, "info");
+        }
+    } else if (data.type === "STOCK_UPDATE" || data.type === "PRODUCT_ADDED" || data.type === "PRODUCT_DELETED") {
+        renderStoreProducts();
+        renderKitchenMenuTable();
+    }
+}
+
 window.addEventListener("storage", (e) => {
     if (e.key === "royalbakes_orders") {
         renderKitchenStats();
@@ -1180,8 +1249,10 @@ window.addEventListener("storage", (e) => {
     }
 });
 
-// INITIALIZE
+// INITIALIZE ON LOAD
 document.addEventListener("DOMContentLoaded", () => {
+    // Starts directly on Home Landing view with Two Big Cards
+    showView("landing");
     renderStoreProducts();
     applySettingsToUI();
     applyCustomerProfile();

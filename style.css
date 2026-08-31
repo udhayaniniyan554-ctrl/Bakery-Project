@@ -750,6 +750,12 @@ body {
     margin-bottom: 15px;
 }
 
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
 .form-section-card label {
     display: block;
     font-size: 13px;
@@ -1878,6 +1884,7 @@ body {
 @media (max-width: 768px) {
     .portal-choice-grid,
     .checkout-two-col-grid,
+    .form-row-grid,
     .footer-inner {
         grid-template-columns: 1fr;
     }
