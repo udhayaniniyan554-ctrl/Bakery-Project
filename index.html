@@ -4,21 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Bakes</title>
-
+    <title>Smart Bakes - Premium Bakery & Cafe</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for elevated typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
 </head>
 
 <body>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <!-- LOGIN PAGE -->
     <section id="loginPage" class="login-page">
 
         <div class="login-image">
-            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1200&q=90">
+            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1200&q=90" alt="Smart Bakes Fresh Pastries">
 
             <div class="image-text">
-                <p>SMART BAKES • PREMIUM BAKERY</p>
+                <p>SMART BAKES • ARTISANAL BAKERY</p>
 
                 <h1>
                     A little sweetness
@@ -27,7 +33,7 @@
                 </h1>
 
                 <span>
-                    Freshly baked. Carefully crafted. Made with love.
+                    Freshly baked every morning. Handcrafted with authentic ingredients and love.
                 </span>
             </div>
         </div>
@@ -44,35 +50,32 @@
             </p>
 
             <div class="welcome">
-
                 <h1>Welcome Back</h1>
-
                 <p>
-                    Sign in to continue your delicious journey.
+                    Sign in to order your favorite treats and track your deliveries.
                 </p>
-
             </div>
 
 
             <form id="loginForm">
 
                 <label>Email Address</label>
-
                 <input
                     type="email"
+                    id="loginEmail"
                     placeholder="Enter your email"
+                    value="customer@smartbakes.com"
                     required
                 >
-
 
                 <label>Password</label>
-
                 <input
                     type="password"
+                    id="loginPassword"
                     placeholder="Enter your password"
+                    value="••••••••"
                     required
                 >
-
 
                 <button type="submit" class="dark-btn">
                     Sign In →
@@ -80,19 +83,17 @@
 
             </form>
 
-
             <div class="or">
                 OR
             </div>
 
-
             <button
                 class="guest-btn"
                 onclick="continueAsGuest()"
+                type="button"
             >
-                Continue as Guest
+                Continue as Guest 🛍️
             </button>
-
 
             <p class="signup">
                 New to Smart Bakes?
@@ -108,50 +109,52 @@
     <!-- SHOP PAGE -->
     <section id="shopPage" class="shop-page">
 
-        <!-- NAVBAR -->
+        <!-- TOP NOTIFICATION BANNER -->
+        <div class="announcement-bar">
+            <span>🎉 Special Offer: Use code <strong>SWEET10</strong> for 10% OFF | Free delivery above ₹499!</span>
+        </div>
 
+        <!-- NAVBAR -->
         <header class="navbar">
 
-            <div class="logo">
-
-                <div class="logo-icon">
-                    ✦
-                </div>
-
+            <div class="logo" onclick="openShop()">
+                <div class="logo-icon">✦</div>
                 <div>
                     <h2>Smart Bakes</h2>
                     <small>PREMIUM BAKERY</small>
                 </div>
-
             </div>
 
-
             <nav>
-                <a href="#">Home</a>
-                <a href="#menu">Menu</a>
-                <a href="#footer">About</a>
+                <a href="#home" onclick="goToSection('home')">Home</a>
+                <a href="#menu" onclick="goToSection('menu')">Menu</a>
+                <a href="#about" onclick="goToSection('footer')">About</a>
+                <a href="javascript:void(0)" onclick="openOrdersModal()">My Orders <span id="ordersBadge" class="nav-badge" style="display:none;">0</span></a>
             </nav>
 
-
-            <button
-                class="cart-btn"
-                onclick="openCart()"
-            >
-                🛒
-                <span id="cartCount">0</span>
-            </button>
+            <div class="nav-actions">
+                <button class="nav-btn orders-icon-btn" onclick="openOrdersModal()" title="View Orders">
+                    📋 <span class="btn-text">Orders</span>
+                </button>
+                <button class="cart-btn" onclick="openCart()" title="View Cart">
+                    🛒
+                    <span id="cartCount">0</span>
+                </button>
+                <button class="logout-btn" onclick="logout()" title="Sign Out">
+                    🚪
+                </button>
+            </div>
 
         </header>
 
 
 
         <!-- HERO -->
-
-        <section class="hero">
+        <section id="home" class="hero">
 
             <div class="hero-content">
 
-                <p>WELCOME TO SMART BAKES</p>
+                <p>HANDCRAFTED DAILY</p>
 
                 <h1>
                     Freshly Baked.
@@ -160,14 +163,17 @@
                 </h1>
 
                 <span>
-                    Premium cakes, buns, snacks and refreshing drinks
-                    made fresh for every special moment.
+                    Indulge in artisanal chocolate cakes, warm jam buns, crispy savoury puffs, and chilled gourmet refreshments.
                 </span>
 
-
-                <button onclick="goToMenu()">
-                    Explore Menu ↓
-                </button>
+                <div class="hero-btns">
+                    <button class="hero-primary-btn" onclick="goToMenu()">
+                        Explore Menu ↓
+                    </button>
+                    <button class="hero-secondary-btn" onclick="openOrdersModal()">
+                        Track Recent Order 📦
+                    </button>
+                </div>
 
             </div>
 
@@ -175,49 +181,47 @@
 
 
 
-        <!-- MENU -->
+        <!-- MENU SECTION -->
+        <section class="menu" id="menu">
 
-        <section
-            class="menu"
-            id="menu"
-        >
-
-            <div class="menu-title">
-
-                <div>
-
-                    <p>OUR MENU</p>
-
-                    <h1>
-                        Today's Fresh Picks
-                    </h1>
-
+            <div class="menu-header">
+                <div class="menu-title">
+                    <p>OUR FRESH MENU</p>
+                    <h1>Today's Fresh Picks</h1>
                 </div>
 
+                <div class="menu-search-wrapper">
+                    <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="🔍 Search cakes, puffs, drinks..."
+                        onkeyup="searchProducts()"
+                    >
+                </div>
+            </div>
 
-                <input
-                    id="searchInput"
-                    type="text"
-                    placeholder="🔍 Search products..."
-                    onkeyup="searchProducts()"
-                >
-
+            <!-- CATEGORY FILTER PILLS -->
+            <div class="category-filters" id="categoryFilters">
+                <button class="filter-pill active" onclick="filterCategory('all', this)">✨ All Items</button>
+                <button class="filter-pill" onclick="filterCategory('cakes', this)">🎂 Cakes</button>
+                <button class="filter-pill" onclick="filterCategory('snacks', this)">🥟 Snacks & Puffs</button>
+                <button class="filter-pill" onclick="filterCategory('buns', this)">🥐 Buns & Breads</button>
+                <button class="filter-pill" onclick="filterCategory('drinks', this)">🥤 Beverages</button>
             </div>
 
 
+            <!-- PRODUCTS GRID -->
             <div
                 id="productsGrid"
                 class="products-grid"
             >
-
             </div>
 
         </section>
 
 
 
-        <!-- CART -->
-
+        <!-- CART SLIDEOUT DRAWER -->
         <div
             id="cartOverlay"
             class="cart-overlay"
@@ -230,25 +234,27 @@
             >
 
                 <div class="cart-header">
-
                     <div>
-
-                        <p>YOUR ORDER</p>
-
-                        <h2>
-                            Shopping Cart
-                        </h2>
-
+                        <p>YOUR BASKET</p>
+                        <h2>Shopping Cart</h2>
                     </div>
 
-
-                    <button onclick="closeCart()">
+                    <button class="close-cart-btn" onclick="closeCart()">
                         ✕
                     </button>
-
                 </div>
 
+                <!-- FREE DELIVERY PROGRESS -->
+                <div class="free-delivery-box" id="freeDeliveryBox">
+                    <div class="progress-text" id="freeDeliveryText">
+                        Add ₹499 for <strong>Free Delivery!</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="freeDeliveryProgress" style="width: 0%"></div>
+                    </div>
+                </div>
 
+                <!-- CART ITEMS LIST -->
                 <div
                     id="cartItems"
                     class="cart-items"
@@ -256,20 +262,31 @@
                 </div>
 
 
+                <!-- CART FOOTER & COUPON -->
                 <div class="cart-footer">
 
-                    <div>
-
-                        <span>
-                            Total
-                        </span>
-
-                        <strong id="cartTotal">
-                            ₹0
-                        </strong>
-
+                    <div class="coupon-section">
+                        <div class="coupon-input-group">
+                            <input type="text" id="cartCouponInput" placeholder="Enter coupon (e.g. SWEET10)" style="text-transform: uppercase;">
+                            <button type="button" onclick="applyCoupon()">Apply</button>
+                        </div>
+                        <div id="couponMessage" class="coupon-feedback"></div>
                     </div>
 
+                    <div class="cart-bill-summary">
+                        <div class="bill-row">
+                            <span>Subtotal</span>
+                            <span id="cartSubtotal">₹0</span>
+                        </div>
+                        <div class="bill-row discount-row" id="cartDiscountRow" style="display:none;">
+                            <span>Discount <small id="couponCodeBadge"></small></span>
+                            <span id="cartDiscountAmount">-₹0</span>
+                        </div>
+                        <div class="bill-row total-bill-row">
+                            <strong>Total Amount</strong>
+                            <strong id="cartTotal">₹0</strong>
+                        </div>
+                    </div>
 
                     <button
                         class="checkout-btn"
@@ -289,8 +306,6 @@
 
 
     <!-- CHECKOUT PAGE -->
-    <!-- IMPORTANT: outside shopPage -->
-
     <section
         id="checkoutPage"
         class="checkout-page"
@@ -307,79 +322,60 @@
 
 
             <div class="page-heading">
-
                 <p>SMART BAKES</p>
-
-                <h1>
-                    Checkout
-                </h1>
-
-                <span>
-                    Complete your order
-                </span>
-
+                <h1>Delivery Details</h1>
+                <span>Complete your address & delivery preferences</span>
             </div>
 
 
             <div class="checkout-grid">
 
-
-                <!-- CUSTOMER -->
-
+                <!-- CUSTOMER DETAILS FORM -->
                 <div class="details-card">
 
-                    <h2>
-                        Customer Details
-                    </h2>
+                    <h2>Customer Information</h2>
+                    <p>Enter where you'd like your fresh bakery items delivered</p>
 
-                    <p>
-                        Enter your delivery information
-                    </p>
-
-
-                    <label>
-                        Full Name
-                    </label>
-
+                    <label for="customerName">Full Name *</label>
                     <input
                         id="customerName"
                         type="text"
-                        placeholder="Enter your name"
+                        placeholder="e.g. Muthukrishnan S"
+                        required
                     >
 
-
-                    <label>
-                        Mobile Number
-                    </label>
-
+                    <label for="customerPhone">Mobile Number (10 Digits) *</label>
                     <input
                         id="customerPhone"
                         type="tel"
                         maxlength="10"
-                        placeholder="Enter 10 digit mobile number"
+                        placeholder="e.g. 9876543210"
+                        required
                     >
 
-
-                    <label>
-                        Delivery Address
-                    </label>
-
+                    <label for="customerAddress">Delivery Address *</label>
                     <textarea
                         id="customerAddress"
-                        placeholder="Enter your complete address"
+                        placeholder="Flat / House No, Street, Landmark, City, Pincode"
+                        required
                     ></textarea>
 
+                    <label for="deliveryTimeSlot">Preferred Delivery Slot</label>
+                    <select id="deliveryTimeSlot" class="custom-select">
+                        <option value="Standard (Within 45 Mins)">⚡ Immediate (Within 45 Mins)</option>
+                        <option value="Evening (5:00 PM - 7:00 PM)">🌅 Today Evening (5:00 PM - 7:00 PM)</option>
+                        <option value="Night (7:00 PM - 9:00 PM)">🌙 Tonight (7:00 PM - 9:00 PM)</option>
+                        <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">☀️ Tomorrow Morning (8:00 AM - 10:00 AM)</option>
+                    </select>
 
-                    <label>
-                        Order Note
+                    <label for="orderNote">
+                        Special Instructions / Cake Message
                         <small>(Optional)</small>
                     </label>
-
                     <textarea
                         id="orderNote"
-                        placeholder="Any special request?"
+                        placeholder="e.g. Write 'Happy Birthday' on chocolate cake / Ring bell twice"
                     ></textarea>
-
 
                     <button
                         class="dark-btn"
@@ -392,54 +388,35 @@
 
 
 
-                <!-- SUMMARY -->
-
+                <!-- ORDER SUMMARY CARD -->
                 <div class="summary-card">
 
-                    <h2>
-                        Your Order
-                    </h2>
+                    <h2>Order Summary</h2>
 
-
-                    <div id="checkoutItems"></div>
-
+                    <div id="checkoutItems" class="checkout-items-list"></div>
 
                     <div class="summary-row">
-
-                        <span>
-                            Subtotal
-                        </span>
-
-                        <strong id="checkoutSubtotal">
-                            ₹0
-                        </strong>
-
+                        <span>Subtotal</span>
+                        <strong id="checkoutSubtotal">₹0</strong>
                     </div>
 
+                    <div class="summary-row discount-text" id="checkoutDiscountRow" style="display:none;">
+                        <span>Discount Savings</span>
+                        <strong id="checkoutDiscount">-₹0</strong>
+                    </div>
 
                     <div class="summary-row">
-
-                        <span>
-                            Delivery
-                        </span>
-
-                        <strong>
-                            ₹30
-                        </strong>
-
+                        <span>Delivery Partner Fee</span>
+                        <strong id="checkoutDeliveryFee">₹30</strong>
                     </div>
-
 
                     <div class="total-row">
+                        <span>Grand Total</span>
+                        <strong id="checkoutTotal">₹30</strong>
+                    </div>
 
-                        <span>
-                            Total
-                        </span>
-
-                        <strong id="checkoutTotal">
-                            ₹30
-                        </strong>
-
+                    <div class="security-badge">
+                        🔒 Safe & Secure 256-Bit SSL Checkout
                     </div>
 
                 </div>
@@ -453,7 +430,6 @@
 
 
     <!-- PAYMENT PAGE -->
-
     <section
         id="paymentPage"
         class="payment-page"
@@ -465,89 +441,150 @@
                 class="back-btn"
                 onclick="backToCheckout()"
             >
-                ← Back
+                ← Back to Details
             </button>
 
-
             <div class="page-heading">
-
                 <p>SMART BAKES</p>
-
-                <h1>
-                    Make Payment
-                </h1>
-
-                <span>
-                    Complete your payment securely
-                </span>
-
+                <h1>Payment Options</h1>
+                <span>Choose your preferred method to complete your order</span>
             </div>
 
 
             <div class="payment-grid">
 
+                <!-- PAYMENT METHOD & QR CARD -->
+                <div class="payment-methods-card">
 
-                <div class="qr-card">
+                    <!-- METHOD TABS -->
+                    <div class="payment-tabs">
+                        <button class="pay-tab active" id="tabUpi" onclick="selectPaymentMethod('upi')">
+                            📱 UPI / QR Code
+                        </button>
+                        <button class="pay-tab" id="tabCod" onclick="selectPaymentMethod('cod')">
+                            💵 Cash on Delivery
+                        </button>
+                    </div>
 
-                    <h2>
-                        Scan & Pay
-                    </h2>
+                    <!-- UPI QR PAYMENT CONTAINER -->
+                    <div id="upiPaymentSection" class="payment-section-box">
 
-                    <p>
-                        Scan the QR using any UPI app
-                    </p>
+                        <div class="qr-header-banner">
+                            <span class="upi-live-badge">🟢 Instant UPI Verification</span>
+                            <h3>Scan QR & Pay with Any UPI App</h3>
+                            <p>Supports Google Pay, PhonePe, Paytm, BHIM & All Banking Apps</p>
+                        </div>
 
+                        <!-- REAL UPLOADED QR CODE DISPLAY -->
+                        <div class="real-qr-wrapper">
+                            <img
+                                id="uploadedQrImage"
+                                src="assets/qr-code.jpg"
+                                alt="Smart Bakes Payment UPI QR Code"
+                                class="actual-qr-image"
+                            >
+                            <div class="qr-scan-pulse"></div>
+                        </div>
 
-                    <div class="qr">
+                        <!-- UPI DETAILS & COPY ACTION -->
+                        <div class="upi-details-card">
+                            <div class="upi-account-info">
+                                <div class="upi-avatar">👤</div>
+                                <div>
+                                    <h4 id="upiPayeeName">Muthukrishnan S</h4>
+                                    <p class="bank-tag">🏦 Indian Bank • 4189</p>
+                                </div>
+                            </div>
 
-                        <div class="qr-center">
-                            SB
+                            <div class="upi-id-box">
+                                <div>
+                                    <small>UPI ID</small>
+                                    <strong id="upiIdText">muthukrishnans2002@okhdfcbank</strong>
+                                </div>
+                                <button class="copy-upi-btn" onclick="copyUpiId()" title="Copy UPI ID">
+                                    📋 Copy
+                                </button>
+                            </div>
+
+                            <!-- DIRECT MOBILE APP INTENT LINK -->
+                            <a
+                                id="payViaUpiAppBtn"
+                                class="upi-direct-btn"
+                                href="upi://pay?pa=muthukrishnans2002@okhdfcbank&pn=Muthukrishnan%20S&cu=INR"
+                            >
+                                🚀 Pay Directly via UPI App
+                            </a>
+                        </div>
+
+                        <!-- OPTIONAL TRANSACTION REFERENCE -->
+                        <div class="utr-input-box">
+                            <label for="transactionUtr">
+                                UPI Ref / UTR No. <small>(Optional for instant matching)</small>
+                            </label>
+                            <input
+                                type="text"
+                                id="transactionUtr"
+                                placeholder="e.g. 423871928371 (12 digits)"
+                                maxlength="16"
+                            >
                         </div>
 
                     </div>
 
-
-                    <small>
-                        UPI ID
-                    </small>
-
-                    <strong>
-                        smartbakes@upi
-                    </strong>
+                    <!-- CASH ON DELIVERY CONTAINER -->
+                    <div id="codPaymentSection" class="payment-section-box" style="display: none;">
+                        <div class="cod-banner">
+                            <div class="cod-icon">💵</div>
+                            <h3>Cash on Delivery</h3>
+                            <p>Pay with cash or UPI directly to our delivery partner when your warm bakery order arrives at your door.</p>
+                            <div class="cod-notice">
+                                ℹ️ Please keep exact change ready for a faster handover!
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
 
 
+                <!-- PAYMENT ORDER SUMMARY -->
                 <div class="summary-card">
 
-                    <h2>
-                        Order Summary
-                    </h2>
+                    <h2>Order Payable</h2>
 
+                    <div id="paymentItems" class="checkout-items-list"></div>
 
-                    <div id="paymentItems"></div>
-
-
-                    <div class="total-row">
-
-                        <span>
-                            Payable Amount
-                        </span>
-
-                        <strong id="paymentTotal">
-                            ₹0
-                        </strong>
-
+                    <div class="summary-row">
+                        <span>Items Subtotal</span>
+                        <strong id="paymentSubtotal">₹0</strong>
                     </div>
 
+                    <div class="summary-row discount-text" id="paymentDiscountRow" style="display:none;">
+                        <span>Coupon Discount</span>
+                        <strong id="paymentDiscount">-₹0</strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <strong id="paymentDeliveryFee">₹30</strong>
+                    </div>
+
+                    <div class="total-row">
+                        <span>Total Payable Amount</span>
+                        <strong id="paymentTotal">₹0</strong>
+                    </div>
 
                     <button
-                        class="dark-btn"
+                        id="confirmPaymentBtn"
+                        class="dark-btn confirm-order-btn"
                         onclick="paymentCompleted()"
                     >
-                        ✓ I Have Completed Payment
+                        ✓ Confirm Order & Complete
                     </button>
+
+                    <p class="trust-note">
+                        🔒 By placing order you agree to Smart Bakes delivery terms.
+                    </p>
 
                 </div>
 
@@ -559,8 +596,7 @@
 
 
 
-    <!-- SUCCESS PAGE -->
-
+    <!-- SUCCESS / ORDER CONFIRMATION PAGE -->
     <section
         id="successPage"
         class="success-page"
@@ -568,26 +604,43 @@
 
         <div class="success-card">
 
-            <div class="success-icon">
-                ✓
+            <div class="success-icon-wrapper">
+                <div class="success-icon">✓</div>
+            </div>
+
+            <p class="brand-tag">SMART BAKES • ORDER CONFIRMED</p>
+
+            <h1>Thank You for Your Order!</h1>
+
+            <span class="success-subtext">
+                Your treats are being prepared with extra care. We've recorded your order details below.
+            </span>
+
+            <!-- LIVE ORDER PROGRESS BAR -->
+            <div class="order-tracker">
+                <div class="tracker-step completed">
+                    <div class="step-circle">1</div>
+                    <small>Received</small>
+                </div>
+                <div class="tracker-line completed"></div>
+                <div class="tracker-step active">
+                    <div class="step-circle">2</div>
+                    <small>Baking</small>
+                </div>
+                <div class="tracker-line"></div>
+                <div class="tracker-step">
+                    <div class="step-circle">3</div>
+                    <small>Out for Delivery</small>
+                </div>
+                <div class="tracker-line"></div>
+                <div class="tracker-step">
+                    <div class="step-circle">4</div>
+                    <small>Delivered</small>
+                </div>
             </div>
 
 
-            <p>
-                SMART BAKES
-            </p>
-
-
-            <h1>
-                Order Placed!
-            </h1>
-
-
-            <span>
-                Thank you for ordering with us.
-            </span>
-
-
+            <!-- INVOICE / ORDER RECEIPT DETAILS -->
             <div
                 id="successDetails"
                 class="success-details"
@@ -595,11 +648,29 @@
             </div>
 
 
+            <!-- ACTIONS: WHATSAPP DISPATCH & PRINT -->
+            <div class="success-actions">
+                <button
+                    id="whatsappOrderBtn"
+                    class="whatsapp-btn"
+                    onclick="sendOrderToWhatsApp()"
+                >
+                    💬 Send Order to Bakery WhatsApp
+                </button>
+
+                <button
+                    class="print-invoice-btn"
+                    onclick="printOrderReceipt()"
+                >
+                    🖨️ Print / Save Receipt
+                </button>
+            </div>
+
             <button
-                class="dark-btn"
+                class="dark-btn continue-shopping-btn"
                 onclick="backToShop()"
             >
-                Continue Shopping →
+                ← Continue Shopping
             </button>
 
         </div>
@@ -608,21 +679,50 @@
 
 
 
-    <!-- FOOTER -->
+    <!-- MY ORDERS MODAL -->
+    <div id="ordersModal" class="orders-modal-overlay" onclick="closeOrdersModal()">
+        <div class="orders-modal-box" onclick="event.stopPropagation()">
+            <div class="orders-modal-header">
+                <div>
+                    <p>YOUR RECENT ORDERS</p>
+                    <h2>Order History & Status</h2>
+                </div>
+                <button class="close-cart-btn" onclick="closeOrdersModal()">✕</button>
+            </div>
 
+            <div id="ordersList" class="orders-list-container">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- FOOTER -->
     <footer id="footer">
 
-        <h2>
-            ✦ Smart Bakes
-        </h2>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h2>✦ Smart Bakes</h2>
+                <p>Freshness you can taste. Happiness you can share. Fresh artisanal baked goodness delivered to your doorstep.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <a href="#menu" onclick="goToSection('menu')">Our Menu</a>
+                <a href="javascript:void(0)" onclick="openOrdersModal()">Track Orders</a>
+                <a href="order.html">Direct WhatsApp Order Form</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contact & Payment</h4>
+                <p>📍 Smart Bakes Bakery Street</p>
+                <p>📞 +91 98765 43210</p>
+                <p>💳 UPI: muthukrishnans2002@okhdfcbank</p>
+            </div>
+        </div>
 
-        <p>
-            Freshness you can taste. Happiness you can share.
-        </p>
-
-        <small>
-            © 2026 Smart Bakes
-        </small>
+        <div class="footer-bottom">
+            <small>© 2026 Smart Bakes. Handcrafted with ❤️ for pastry lovers.</small>
+        </div>
 
     </footer>
 

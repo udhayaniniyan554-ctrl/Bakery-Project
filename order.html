@@ -3,50 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Bakes - Order</title>
+  <title>Smart Bakes - WhatsApp Direct Order</title>
 
   <style>
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #fff7ed;
-      padding: 20px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #faf7f3;
+      padding: 30px 15px;
+      color: #302018;
     }
 
     .container {
-      max-width: 500px;
-      margin: 30px auto;
+      max-width: 520px;
+      margin: auto;
       background: white;
-      padding: 30px;
-      border-radius: 18px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+      padding: 35px 25px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(48, 32, 24, 0.08);
+      border: 1px solid #eee4dc;
+    }
+
+    .header-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header-logo span {
+      font-size: 32px;
+      display: block;
     }
 
     h1 {
       text-align: center;
-      color: #7b3f00;
+      color: #392218;
+      font-size: 24px;
+      margin-top: 5px;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #85746b;
+      font-size: 13px;
       margin-bottom: 25px;
     }
 
     label {
       display: block;
-      margin-top: 15px;
-      font-weight: bold;
+      margin-top: 14px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #392218;
     }
 
     input,
     select,
     textarea {
       width: 100%;
-      padding: 12px;
+      padding: 12px 14px;
       margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
+      border: 1.5px solid #eee4dc;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fdfdfd;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #d49a6a;
+      background: #fff;
+    }
+
+    .qr-preview-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fdfaf7;
+      border: 1px solid #ebdcd0;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .qr-preview-box img {
+      max-width: 180px;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      margin: 10px auto;
+      display: block;
+    }
+
+    .upi-info {
+      font-size: 12px;
+      color: #644e42;
+      font-weight: 600;
     }
 
     button {
@@ -54,24 +109,32 @@
       padding: 14px;
       margin-top: 22px;
       border: none;
-      border-radius: 8px;
-      background: #7b3f00;
+      border-radius: 10px;
+      background: #25d366;
       color: white;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+      transition: background 0.2s;
     }
 
     button:hover {
-      background: #a05220;
+      background: #1ebc59;
     }
 
     .back {
       display: block;
       text-align: center;
       margin-top: 18px;
-      color: #7b3f00;
+      color: #392218;
       text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .back:hover {
+      color: #d49a6a;
     }
   </style>
 </head>
@@ -80,11 +143,15 @@
 
   <div class="container">
 
-    <h1>🍰 Smart Bakes</h1>
+    <div class="header-logo">
+      <span>✦</span>
+      <h1>Smart Bakes</h1>
+      <p class="subtitle">Quick WhatsApp Ordering & Direct Payment</p>
+    </div>
 
     <form id="orderForm">
 
-      <label>Customer Name</label>
+      <label for="name">Customer Full Name *</label>
       <input
         type="text"
         id="name"
@@ -92,26 +159,30 @@
         required
       >
 
-      <label>Phone Number</label>
+      <label for="phone">Phone Number *</label>
       <input
         type="tel"
         id="phone"
-        placeholder="Enter your phone number"
+        placeholder="Enter 10-digit mobile number"
         required
       >
 
-      <label>Select Cake / Item</label>
+      <label for="item">Select Cake / Bakery Item *</label>
       <select id="item" required>
-        <option value="">Select an item</option>
-        <option value="Premium Cake">Premium Cake - ₹500</option>
-        <option value="Black Forest Cake">Black Forest Cake - ₹600</option>
-        <option value="Red Velvet Cake">Red Velvet Cake - ₹650</option>
-        <option value="Brownie">Brownie - ₹150</option>
-        <option value="Cookies">Cookies - ₹100</option>
-        <option value="Puffs">Puffs - ₹40</option>
+        <option value="">Choose an item</option>
+        <option value="Signature Chocolate Cake (₹300)">Signature Chocolate Cake - ₹300</option>
+        <option value="Royal Ice Cube Cake (₹500)">Royal Ice Cube Cake - ₹500</option>
+        <option value="Classic Vanilla Delight (₹20)">Classic Vanilla Delight - ₹20</option>
+        <option value="Crispy Veg/Egg Puffs (₹20)">Crispy Veg/Egg Puffs - ₹20</option>
+        <option value="Sweet Jam Bun (₹15)">Sweet Jam Bun - ₹15</option>
+        <option value="Fresh Coconut Bun (₹15)">Fresh Coconut Bun - ₹15</option>
+        <option value="Spiced Chicken Roll (₹25)">Spiced Chicken Roll - ₹25</option>
+        <option value="Hot Chilli Bread Snack (₹20)">Hot Chilli Bread Snack - ₹20</option>
+        <option value="Chilled Pepsi Can (₹15)">Chilled Pepsi Can - ₹15</option>
+        <option value="Artisan Chocolates Box (₹10)">Artisan Chocolates Box - ₹10</option>
       </select>
 
-      <label>Quantity</label>
+      <label for="quantity">Quantity *</label>
       <input
         type="number"
         id="quantity"
@@ -120,22 +191,29 @@
         required
       >
 
-      <label>Delivery Address</label>
+      <label for="address">Delivery Address *</label>
       <textarea
         id="address"
-        rows="4"
-        placeholder="Enter your delivery address"
+        rows="3"
+        placeholder="Enter complete delivery address"
         required
       ></textarea>
 
+      <!-- UPI QR PREVIEW -->
+      <div class="qr-preview-box">
+        <div class="upi-info">📱 Scan & Pay via UPI (Google Pay, PhonePe, Paytm)</div>
+        <img src="assets/qr-code.jpg" alt="UPI QR Code - Muthukrishnan S">
+        <div class="upi-info">UPI ID: <strong>muthukrishnans2002@okhdfcbank</strong></div>
+      </div>
+
       <button type="submit">
-        Place Order 📲
+        Send Order to WhatsApp 📲
       </button>
 
     </form>
 
     <a href="index.html" class="back">
-      ← Back to Home
+      ← Back to Full Store Menu
     </a>
 
   </div>
@@ -145,22 +223,25 @@
 
       event.preventDefault();
 
-      const name = document.getElementById("name").value;
-      const phone = document.getElementById("phone").value;
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
       const item = document.getElementById("item").value;
       const quantity = document.getElementById("quantity").value;
-      const address = document.getElementById("address").value;
+      const address = document.getElementById("address").value.trim();
 
-      // CHANGE THIS TO YOUR BAKERY WHATSAPP NUMBER
       const bakeryNumber = "919876543210";
 
       const message =
-        "🍰 NEW ORDER - SMART BAKES\n\n" +
-        "👤 Customer: " + name + "\n" +
-        "📞 Phone: " + phone + "\n" +
-        "🍰 Item: " + item + "\n" +
-        "🔢 Quantity: " + quantity + "\n" +
-        "📍 Address: " + address;
+        "🍰 *NEW ORDER - SMART BAKES*\n" +
+        "━━━━━━━━━━━━━━━━━━━━\n" +
+        "👤 *Customer:* " + name + "\n" +
+        "📞 *Phone:* " + phone + "\n" +
+        "🍰 *Item:* " + item + "\n" +
+        "🔢 *Quantity:* " + quantity + "\n" +
+        "📍 *Address:* " + address + "\n" +
+        "💳 *UPI ID:* muthukrishnans2002@okhdfcbank\n" +
+        "━━━━━━━━━━━━━━━━━━━━\n" +
+        "✅ _Please confirm order preparation!_";
 
       const whatsappURL =
         "https://wa.me/" +
