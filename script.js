@@ -902,8 +902,14 @@ function saveOrderToHistory(order) {
     } catch (e) {
         orders = [];
     }
+    // Ensure default status
+    order.status = order.status || "Pending";
     orders.unshift(order);
     localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
+    
+    // Play chime and update shopkeeper in real-time
+    playNewOrderChime();
+    updatePendingBadge();
 }
 
 function updateOrdersBadge() {
@@ -918,6 +924,25 @@ function updateOrdersBadge() {
                 badge.style.display = "none";
             }
         }
+        updatePendingBadge();
+    } catch (e) {}
+}
+
+function updatePendingBadge() {
+    try {
+        const orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
+        const pillBadge = document.getElementById("pendingOrdersPillBadge");
+        const tabBadge = document.getElementById("tabOrdersCount");
+        if (pillBadge) {
+            if (pendingCount > 0) {
+                pillBadge.style.display = "inline-block";
+                pillBadge.textContent = pendingCount;
+            } else {
+                pillBadge.style.display = "none";
+            }
+        }
+        if (tabBadge) tabBadge.textContent = orders.length;
     } catch (e) {}
 }
 
@@ -945,11 +970,16 @@ function openOrdersModal() {
     } else {
         orders.forEach(order => {
             const itemsSummary = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
+            let statusClass = "status-pending";
+            if (order.status === "Baking") statusClass = "status-baking";
+            if (order.status === "Out for Delivery") statusClass = "status-delivery";
+            if (order.status === "Delivered") statusClass = "status-delivered";
+
             container.innerHTML += `
                 <div class="order-history-card">
                     <div class="order-card-header">
                         <strong>Order #${order.orderId}</strong>
-                        <span class="order-status-tag">${order.status || "Confirmed"}</span>
+                        <span class="status-badge ${statusClass}">${order.status || "Pending"}</span>
                     </div>
                     <div style="font-size: 11px; color: var(--text-muted);">${order.date}</div>
                     <div class="order-card-items">
@@ -970,4 +1000,479 @@ function openOrdersModal() {
 function closeOrdersModal() {
     const modal = document.getElementById("ordersModal");
     if (modal) modal.style.display = "none";
-}
+}
+
+/* ================================================================= */
+/* =================== REAL-TIME AUDIO SYNTHESIZER ================= */
+/* ================================================================= */
+function playNewOrderChime() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {}
+}
+
+/* ================================================================= */
+/* ===================== PORTAL SWITCHING ENGINE =================== */
+/* ================================================================= */
+function switchPortal(portal) {
+    const custRoot = document.getElementById("customerPortalRoot");
+    const skRoot = document.getElementById("shopkeeperPortalRoot");
+    const btnCust = document.getElementById("btnCustomerPortal");
+    const btnSk = document.getElementById("btnShopkeeperPortal");
+
+    if (portal === "shopkeeper") {
+        if (custRoot) custRoot.style.display = "none";
+        if (skRoot) skRoot.style.display = "block";
+        if (btnCust) btnCust.classList.remove("active");
+        if (btnSk) btnSk.classList.add("active");
+        renderAdminDashboard();
+        showToast("Logged into Shopkeeper Kitchen Portal 🏪", "info");
+    } else {
+        if (custRoot) custRoot.style.display = "block";
+        if (skRoot) skRoot.style.display = "none";
+        if (btnCust) btnCust.classList.add("active");
+        if (btnSk) btnSk.classList.remove("active");
+        displayProducts();
+    }
+}
+
+function switchShopkeeperTab(tab) {
+    const tabs = ["orders", "inventory", "analytics", "settings"];
+    tabs.forEach(t => {
+        const btn = document.getElementById("skTab" + t.charAt(0).toUpperCase() + t.slice(1));
+        const content = document.getElementById("skTabContent" + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.remove("active");
+        if (content) content.style.display = "none";
+    });
+
+    const activeBtn = document.getElementById("skTab" + tab.charAt(0).toUpperCase() + tab.slice(1));
+    const activeContent = document.getElementById("skTabContent" + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (activeBtn) activeBtn.classList.add("active");
+    if (activeContent) activeContent.style.display = "block";
+
+    if (tab === "orders") renderAdminOrders();
+    if (tab === "inventory") renderInventoryTable();
+    if (tab === "analytics") renderAnalytics();
+}
+
+/* ================================================================= */
+/* =================== SHOPKEEPER ADMIN FUNCTIONS ================== */
+/* ================================================================= */
+let currentAdminFilter = "all";
+
+function renderAdminDashboard() {
+    renderAdminStats();
+    renderAdminOrders();
+    renderInventoryTable();
+}
+
+function renderAdminStats() {
+    try {
+        const orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+        const pendingCount = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
+        const completedCount = orders.filter(o => o.status === "Delivered").length;
+
+        const revEl = document.getElementById("statRevenue");
+        const totEl = document.getElementById("statTotalOrders");
+        const pendEl = document.getElementById("statPendingOrders");
+        const compEl = document.getElementById("statCompletedOrders");
+
+        if (revEl) revEl.textContent = `₹${totalRevenue}`;
+        if (totEl) totEl.textContent = orders.length;
+        if (pendEl) pendEl.textContent = pendingCount;
+        if (compEl) compEl.textContent = completedCount;
+    } catch (e) {}
+}
+
+function filterAdminOrders(filter, btnElement) {
+    currentAdminFilter = filter;
+    document.querySelectorAll(".order-filter-btn").forEach(b => b.classList.remove("active"));
+    if (btnElement) btnElement.classList.add("active");
+    renderAdminOrders();
+}
+
+function renderAdminOrders() {
+    const container = document.getElementById("adminOrdersList");
+    if (!container) return;
+
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {
+        orders = [];
+    }
+
+    let filtered = orders;
+    if (currentAdminFilter !== "all") {
+        filtered = orders.filter(o => o.status === currentAdminFilter);
+    }
+
+    container.innerHTML = "";
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px solid var(--border-color);">
+                <span style="font-size: 40px; display: block; margin-bottom: 8px;">📭</span>
+                <strong style="color: var(--primary);">No orders matching '${currentAdminFilter}'</strong>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Incoming customer orders will appear automatically in real-time.</p>
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(order => {
+        let statusClass = "status-pending";
+        if (order.status === "Baking") statusClass = "status-baking";
+        if (order.status === "Out for Delivery") statusClass = "status-delivery";
+        if (order.status === "Delivered") statusClass = "status-delivered";
+
+        const itemsHtml = order.items.map(item => `
+            <div class="aoc-item-row">
+                <span>${item.name} × ${item.quantity}</span>
+                <strong>₹${item.price * item.quantity}</strong>
+            </div>
+        `).join("");
+
+        container.innerHTML += `
+            <div class="admin-order-card">
+                <div>
+                    <div class="aoc-header">
+                        <div>
+                            <div class="aoc-id">Order #${order.orderId}</div>
+                            <div class="aoc-time">🕒 ${order.date}</div>
+                        </div>
+                        <span class="status-badge ${statusClass}">${order.status || "Pending"}</span>
+                    </div>
+
+                    <div class="aoc-customer">
+                        <h4>👤 ${order.customerName || "Customer"} (${order.customerPhone || "N/A"})</h4>
+                        <div>📍 ${order.address || "Counter Pickup"}</div>
+                        ${order.note ? `<div style="margin-top: 4px; color: #8c786c;">📝 <i>${order.note}</i></div>` : ""}
+                        <div style="margin-top: 4px;">💳 <b>${order.paymentMethod}</b> ${order.utr ? `(UTR: ${order.utr})` : ""}</div>
+                    </div>
+
+                    <div class="aoc-items-list">
+                        ${itemsHtml}
+                        <div class="aoc-total-row">
+                            <span>Total Bill</span>
+                            <span>₹${order.total}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="aoc-actions">
+                    <button class="aoc-btn aoc-btn-baking" onclick="updateOrderStatus('${order.orderId}', 'Baking')">
+                        🎂 Start Baking
+                    </button>
+                    <button class="aoc-btn aoc-btn-delivery" onclick="updateOrderStatus('${order.orderId}', 'Out for Delivery')">
+                        🚚 Out for Delivery
+                    </button>
+                    <button class="aoc-btn aoc-btn-delivered" onclick="updateOrderStatus('${order.orderId}', 'Delivered')">
+                        ✅ Mark Delivered
+                    </button>
+                    <button class="aoc-btn aoc-btn-print" onclick="printOrderInvoiceById('${order.orderId}')" title="Print KOT Receipt">
+                        🖨️
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function updateOrderStatus(orderId, newStatus) {
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {
+        orders = [];
+    }
+
+    const target = orders.find(o => String(o.orderId) === String(orderId));
+    if (target) {
+        target.status = newStatus;
+        localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
+        showToast(`Order #${orderId} updated to: ${newStatus} ⚡`, "success");
+        renderAdminStats();
+        renderAdminOrders();
+        updatePendingBadge();
+    }
+}
+
+function printOrderInvoiceById(orderId) {
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {
+        orders = [];
+    }
+    const order = orders.find(o => String(o.orderId) === String(orderId));
+    if (order) {
+        currentOrder = order;
+        printOrderReceipt();
+    }
+}
+
+/* ================================================================= */
+/* =================== MENU & STOCK MANAGEMENT ===================== */
+/* ================================================================= */
+function getActiveProducts() {
+    let stored = [];
+    try {
+        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+    } catch (e) {}
+    return [...products, ...stored];
+}
+
+function renderInventoryTable() {
+    const tbody = document.getElementById("inventoryTableBody");
+    const countEl = document.getElementById("inventoryCount");
+    if (!tbody) return;
+
+    const allProds = getActiveProducts();
+    if (countEl) countEl.textContent = allProds.length;
+
+    let stockStatusMap = {};
+    try {
+        stockStatusMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+    } catch (e) {}
+
+    tbody.innerHTML = "";
+    allProds.forEach(prod => {
+        const isOutOfStock = stockStatusMap[prod.id] === false;
+        tbody.innerHTML += `
+            <tr>
+                <td>
+                    <strong>${prod.name}</strong>
+                    <div style="font-size: 11px; color: #8c786c;">${prod.description || ""}</div>
+                </td>
+                <td style="text-transform: capitalize;">${prod.category}</td>
+                <td><strong>₹${prod.price}</strong></td>
+                <td>${prod.isVeg ? "🟢 Veg" : "🔴 Non-Veg"}</td>
+                <td>
+                    <button class="stock-toggle-btn ${isOutOfStock ? "stock-out" : "stock-in"}" onclick="toggleProductStock(${prod.id})">
+                        ${isOutOfStock ? "❌ Out of Stock" : "🟢 In Stock"}
+                    </button>
+                </td>
+                <td>
+                    <button class="stock-toggle-btn stock-out" onclick="deleteCustomProduct(${prod.id})" style="font-size: 11px;">
+                        🗑️ Delete
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function toggleProductStock(prodId) {
+    let stockStatusMap = {};
+    try {
+        stockStatusMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+    } catch (e) {}
+
+    stockStatusMap[prodId] = stockStatusMap[prodId] === false ? true : false;
+    localStorage.setItem("smartbakes_stock_status", JSON.stringify(stockStatusMap));
+    showToast(`Stock status updated for item #${prodId} 🔄`, "info");
+    renderInventoryTable();
+    displayProducts();
+}
+
+function addNewProductModal() {
+    const modal = document.getElementById("addProductModal");
+    if (modal) modal.style.display = "flex";
+}
+
+function closeAddProductModal() {
+    const modal = document.getElementById("addProductModal");
+    if (modal) modal.style.display = "none";
+}
+
+function saveNewProduct(e) {
+    e.preventDefault();
+    const name = document.getElementById("newProdName").value.trim();
+    const category = document.getElementById("newProdCategory").value;
+    const price = Number(document.getElementById("newProdPrice").value);
+    const image = document.getElementById("newProdImage").value.trim() || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=90";
+    const description = document.getElementById("newProdDesc").value.trim() || "Delicious bakery specialty.";
+    const isVeg = document.getElementById("newProdDiet").value === "true";
+
+    const newProd = {
+        id: Date.now(),
+        name,
+        category,
+        price,
+        image,
+        description,
+        isVeg,
+        rating: "5.0 ★ (New)"
+    };
+
+    let stored = [];
+    try {
+        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+    } catch (err) {}
+    stored.push(newProd);
+    localStorage.setItem("smartbakes_custom_products", JSON.stringify(stored));
+
+    showToast(`Added '${name}' to Bakery Menu! 🎂`, "success");
+    closeAddProductModal();
+    document.getElementById("addProductForm").reset();
+    renderInventoryTable();
+    displayProducts();
+}
+
+function deleteCustomProduct(prodId) {
+    if (!confirm("Are you sure you want to remove this product?")) return;
+    let stored = [];
+    try {
+        stored = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+    } catch (e) {}
+    stored = stored.filter(p => p.id !== prodId);
+    localStorage.setItem("smartbakes_custom_products", JSON.stringify(stored));
+    showToast("Product removed 🗑️", "info");
+    renderInventoryTable();
+    displayProducts();
+}
+
+/* ================================================================= */
+/* ===================== SALES ANALYTICS =========================== */
+/* ================================================================= */
+function renderAnalytics() {
+    const container = document.getElementById("analyticsBreakdownTable");
+    if (!container) return;
+
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+    } catch (e) {}
+
+    let salesMap = {};
+    orders.forEach(order => {
+        (order.items || []).forEach(item => {
+            if (!salesMap[item.name]) {
+                salesMap[item.name] = { qty: 0, revenue: 0, price: item.price };
+            }
+            salesMap[item.name].qty += item.quantity;
+            salesMap[item.name].revenue += item.price * item.quantity;
+        });
+    });
+
+    const items = Object.keys(salesMap);
+    if (items.length === 0) {
+        container.innerHTML = `
+            <p style="padding: 20px; color: var(--text-muted); text-align: center;">No product sales recorded yet.</p>
+        `;
+        return;
+    }
+
+    let rows = items.map(name => `
+        <tr>
+            <td><strong>${name}</strong></td>
+            <td>${salesMap[name].qty} units</td>
+            <td>₹${salesMap[name].price}</td>
+            <td><strong>₹${salesMap[name].revenue}</strong></td>
+        </tr>
+    `).join("");
+
+    container.innerHTML = `
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Units Sold</th>
+                    <th>Unit Price</th>
+                    <th>Total Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
+}
+
+/* ================================================================= */
+/* ===================== SHOP & UPI SETTINGS ======================= */
+/* ================================================================= */
+function saveShopSettings() {
+    const payeeName = document.getElementById("settingPayeeName").value.trim();
+    const upiId = document.getElementById("settingUpiId").value.trim();
+    const bankTag = document.getElementById("settingBankTag").value.trim();
+    const phone = document.getElementById("settingWhatsAppNumber").value.trim();
+    const deliveryFee = Number(document.getElementById("settingDeliveryFee").value);
+    const freeThreshold = Number(document.getElementById("settingFreeThreshold").value);
+
+    const settings = {
+        payeeName: payeeName || "Muthukrishnan S",
+        upiId: upiId || "muthukrishnans2002@okhdfcbank",
+        bankTag: bankTag || "Indian Bank • 4189",
+        phone: phone || "919876543210",
+        deliveryFee: deliveryFee || 30,
+        freeThreshold: freeThreshold || 499
+    };
+
+    localStorage.setItem("smartbakes_settings", JSON.stringify(settings));
+    showToast("Bakery & UPI Settings Saved! 💾", "success");
+    applyShopSettingsToUI();
+}
+
+function applyShopSettingsToUI() {
+    let settings = null;
+    try {
+        settings = JSON.parse(localStorage.getItem("smartbakes_settings"));
+    } catch (e) {}
+
+    if (settings) {
+        const upiPayee = document.getElementById("upiPayeeNameDisplay");
+        const upiId = document.getElementById("upiIdTextDisplay");
+        const upiBank = document.getElementById("upiBankTagDisplay");
+        const payBtn = document.getElementById("payViaUpiAppBtn");
+        const footerUpi = document.getElementById("footerUpiDisplay");
+        const footerPhone = document.getElementById("footerPhoneDisplay");
+
+        if (upiPayee) upiPayee.textContent = settings.payeeName;
+        if (upiId) upiId.textContent = settings.upiId;
+        if (upiBank) upiBank.textContent = `🏦 ${settings.bankTag}`;
+        if (payBtn) payBtn.href = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.payeeName)}&cu=INR`;
+        if (footerUpi) footerUpi.textContent = `💳 UPI: ${settings.upiId}`;
+        if (footerPhone) footerPhone.textContent = `📞 +${settings.phone}`;
+    }
+}
+
+/* ================================================================= */
+/* ================= MULTI-TAB REAL TIME STORAGE SYNC ============= */
+/* ================================================================= */
+window.addEventListener("storage", (e) => {
+    if (e.key === "smartbakes_orders") {
+        renderAdminStats();
+        renderAdminOrders();
+        updateOrdersBadge();
+        playNewOrderChime();
+    }
+    if (e.key === "smartbakes_stock_status" || e.key === "smartbakes_custom_products") {
+        displayProducts();
+        renderInventoryTable();
+    }
+    if (e.key === "smartbakes_settings") {
+        applyShopSettingsToUI();
+    }
+});
+
+// Initialize on DOM ready
+document.addEventListener("DOMContentLoaded", () => {
+    applyShopSettingsToUI();
+    updateOrdersBadge();
+});
+
