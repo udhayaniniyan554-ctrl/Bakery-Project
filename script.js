@@ -1,29 +1,49 @@
 /* ================================================================= */
-/* ==================== INITIAL PRODUCTS CATALOG =================== */
+/* ==================== ROYAL BAKES CATALOG ======================== */
 /* ================================================================= */
 const defaultProducts = [
     {
         id: 1,
-        name: "Artisan Chocolates (Box)",
-        category: "snacks",
-        price: 10,
-        image: "https://images.unsplash.com/photo-1575377427642-087cf684f29d?auto=format&fit=crop&w=900&q=90",
-        description: "Rich handcrafted dark & milk chocolate bites made with Belgian cocoa.",
-        isVeg: true,
-        rating: "4.9 ★ (120+)"
-    },
-    {
-        id: 2,
         name: "Signature Chocolate Cake",
         category: "cakes",
-        price: 300,
+        price: 350,
         image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=90",
         description: "Decadent Dutch chocolate sponge layered with smooth chocolate ganache.",
         isVeg: true,
         rating: "5.0 ★ (350+)"
     },
     {
+        id: 2,
+        name: "Royal Red Velvet Cake",
+        category: "cakes",
+        price: 400,
+        image: "https://images.unsplash.com/photo-1586788680434-30d324b2d46f?auto=format&fit=crop&w=900&q=90",
+        description: "Rich velvety red sponge with fresh cream cheese frosting.",
+        isVeg: true,
+        rating: "4.9 ★ (220+)"
+    },
+    {
         id: 3,
+        name: "Classic Vanilla Delight",
+        category: "cakes",
+        price: 250,
+        image: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=crop&w=900&q=90",
+        description: "Fluffy Madagascar vanilla sponge topped with light buttercream.",
+        isVeg: true,
+        rating: "4.7 ★ (65+)"
+    },
+    {
+        id: 4,
+        name: "Artisan Chocolates (Box)",
+        category: "snacks",
+        price: 120,
+        image: "https://images.unsplash.com/photo-1575377427642-087cf684f29d?auto=format&fit=crop&w=900&q=90",
+        description: "Rich handcrafted dark & milk chocolate bites made with Belgian cocoa.",
+        isVeg: true,
+        rating: "4.9 ★ (120+)"
+    },
+    {
+        id: 5,
         name: "Crispy Veg / Egg Puffs",
         category: "snacks",
         price: 20,
@@ -33,37 +53,27 @@ const defaultProducts = [
         rating: "4.8 ★ (80+)"
     },
     {
-        id: 4,
-        name: "Classic Vanilla Delight",
-        category: "cakes",
-        price: 20,
-        image: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=crop&w=900&q=90",
-        description: "Fluffy Madagascar vanilla sponge topped with light buttercream.",
-        isVeg: true,
-        rating: "4.7 ★ (65+)"
-    },
-    {
-        id: 5,
-        name: "Sweet Jam Bun",
+        id: 6,
+        name: "Sweet Fruit Jam Bun",
         category: "buns",
-        price: 15,
+        price: 20,
         image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=90",
         description: "Soft bakery bread bun filled with mixed fruit berry jam.",
         isVeg: true,
         rating: "4.9 ★ (210+)"
     },
     {
-        id: 6,
-        name: "Fresh Coconut Bun",
+        id: 7,
+        name: "Fresh Coconut Cardamom Bun",
         category: "buns",
-        price: 15,
+        price: 25,
         image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=900&q=90",
         description: "Oven-fresh bun stuffed with sweet grated coconut and cardamom.",
         isVeg: true,
         rating: "4.8 ★ (90+)"
     },
     {
-        id: 7,
+        id: 8,
         name: "Chilled Pepsi (Can)",
         category: "drinks",
         price: 35,
@@ -73,10 +83,10 @@ const defaultProducts = [
         rating: "4.9 ★ (400+)"
     },
     {
-        id: 8,
+        id: 9,
         name: "Crispy Samosa (2 Pcs)",
         category: "snacks",
-        price: 25,
+        price: 30,
         image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=90",
         description: "Crispy golden crust filled with spiced potatoes and green peas.",
         isVeg: true,
@@ -90,17 +100,18 @@ let currentPaymentMethod = "upi";
 let currentOrder = null;
 let currentStoreCategory = "all";
 let currentKitchenFilter = "all";
+let isShopkeeperLoggedIn = false;
 
 /* ================================================================= */
 /* ===================== VIEW MANAGEMENT =========================== */
 /* ================================================================= */
 function showView(viewName) {
     document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
-    document.getElementById("navBtnCustomer")?.classList.remove("active");
-    document.getElementById("navBtnShopkeeper")?.classList.remove("active");
+    document.querySelectorAll(".nav-portal-btn").forEach(b => b.classList.remove("active"));
 
     if (viewName === "landing") {
         document.getElementById("viewLanding")?.classList.add("active");
+        document.getElementById("navBtnLanding")?.classList.add("active");
     } else if (viewName === "customer") {
         document.getElementById("viewCustomer")?.classList.add("active");
         document.getElementById("navBtnCustomer")?.classList.add("active");
@@ -111,12 +122,91 @@ function showView(viewName) {
     } else if (viewName === "success") {
         document.getElementById("viewSuccess")?.classList.add("active");
     } else if (viewName === "shopkeeper") {
+        if (!isShopkeeperLoggedIn) {
+            openShopkeeperAuthModal();
+            return;
+        }
         document.getElementById("viewShopkeeper")?.classList.add("active");
         document.getElementById("navBtnShopkeeper")?.classList.add("active");
         renderKitchenDashboard();
-        showToast("Kitchen Dashboard Loaded 🏪", "info");
+        showToast("Kitchen Dashboard Active 🏪", "info");
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ================================================================= */
+/* ================= SHOPKEEPER & CUSTOMER AUTH ==================== */
+/* ================================================================= */
+function openShopkeeperAuthModal() {
+    if (isShopkeeperLoggedIn) {
+        showView("shopkeeper");
+        return;
+    }
+    document.getElementById("skAuthModalOverlay").style.display = "flex";
+}
+
+function closeShopkeeperAuthModal() {
+    document.getElementById("skAuthModalOverlay").style.display = "none";
+}
+
+function handleShopkeeperLogin(e) {
+    e.preventDefault();
+    const user = document.getElementById("skLoginUser").value.trim();
+    const pass = document.getElementById("skLoginPass").value.trim();
+
+    if (user === "muthu_royal" && pass === "royal123") {
+        isShopkeeperLoggedIn = true;
+        closeShopkeeperAuthModal();
+        showToast("Welcome Muthu! Logged into Royal Bakes Kitchen 👑", "success");
+        showView("shopkeeper");
+    } else {
+        showToast("❌ Invalid Credentials! Check username & password.", "error");
+    }
+}
+
+function logoutShopkeeper() {
+    isShopkeeperLoggedIn = false;
+    showToast("Logged out of Kitchen Portal 🚪", "info");
+    showView("landing");
+}
+
+function openCustomerAuthModal() {
+    document.getElementById("custAuthModalOverlay").style.display = "flex";
+}
+
+function closeCustomerAuthModal() {
+    document.getElementById("custAuthModalOverlay").style.display = "none";
+}
+
+function handleCustomerLogin(e) {
+    e.preventDefault();
+    const name = document.getElementById("custLoginName").value.trim();
+    const phone = document.getElementById("custLoginPhone").value.trim();
+
+    if (name && phone.length === 10) {
+        localStorage.setItem("royalbakes_customer", JSON.stringify({ name, phone }));
+        closeCustomerAuthModal();
+        applyCustomerProfile();
+        showToast(`Welcome ${name}! Profile Saved.`, "success");
+    } else {
+        showToast("Please enter name and valid 10-digit mobile number.", "error");
+    }
+}
+
+function applyCustomerProfile() {
+    let cust = null;
+    try {
+        cust = JSON.parse(localStorage.getItem("royalbakes_customer"));
+    } catch (e) {}
+
+    if (cust) {
+        const textEl = document.getElementById("custLoginNavText");
+        const chkName = document.getElementById("chkName");
+        const chkPhone = document.getElementById("chkPhone");
+        if (textEl) textEl.textContent = `👤 ${cust.name}`;
+        if (chkName && !chkName.value) chkName.value = cust.name;
+        if (chkPhone && !chkPhone.value) chkPhone.value = cust.phone;
+    }
 }
 
 /* ================================================================= */
@@ -125,7 +215,7 @@ function showView(viewName) {
 function getAllProducts() {
     let custom = [];
     try {
-        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+        custom = JSON.parse(localStorage.getItem("royalbakes_custom_products") || "[]");
     } catch (e) {}
     return [...defaultProducts, ...custom];
 }
@@ -137,7 +227,7 @@ function renderStoreProducts() {
     const allProds = getAllProducts();
     let stockStatus = {};
     try {
-        stockStatus = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+        stockStatus = JSON.parse(localStorage.getItem("royalbakes_stock_status") || "{}");
     } catch (e) {}
 
     let query = document.getElementById("storeSearchInput")?.value.toLowerCase().trim() || "";
@@ -298,8 +388,6 @@ function updateCartUI() {
     let discount = 0;
     if (appliedCoupon === "SWEET10") {
         discount = Math.round(subtotal * 0.10);
-    } else if (appliedCoupon === "BAKE50") {
-        discount = subtotal > 100 ? 50 : 0;
     }
 
     const grandTotal = Math.max(0, subtotal - discount);
@@ -345,11 +433,6 @@ function applyStoreCoupon() {
         msg.style.color = "#2f855a";
         msg.textContent = "✓ 'SWEET10' applied: 10% Discount!";
         showToast("Coupon SWEET10 applied!", "success");
-    } else if (code === "BAKE50") {
-        appliedCoupon = "BAKE50";
-        msg.style.color = "#2f855a";
-        msg.textContent = "✓ 'BAKE50' applied: ₹50 Discount!";
-        showToast("Coupon BAKE50 applied!", "success");
     } else {
         appliedCoupon = null;
         msg.style.color = "#e53e3e";
@@ -371,6 +454,7 @@ function proceedToCheckoutFromDrawer() {
 /* ===================== CHECKOUT & PAYMENT ======================== */
 /* ================================================================= */
 function renderCheckoutSummary() {
+    applyCustomerProfile();
     const itemsList = document.getElementById("chkItemsList");
     if (!itemsList) return;
 
@@ -384,7 +468,6 @@ function renderCheckoutSummary() {
     const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     let discount = 0;
     if (appliedCoupon === "SWEET10") discount = Math.round(subtotal * 0.10);
-    if (appliedCoupon === "BAKE50") discount = subtotal > 100 ? 50 : 0;
 
     const deliveryFee = subtotal >= 499 || subtotal === 0 ? 0 : 30;
     const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
@@ -454,7 +537,7 @@ function submitFinalOrder() {
     const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
 
     const newOrder = {
-        orderId: "SB-" + Math.floor(100000 + Math.random() * 900000),
+        orderId: "RB-" + Math.floor(100000 + Math.random() * 900000),
         date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
         customerName: name,
         customerPhone: phone,
@@ -476,10 +559,10 @@ function submitFinalOrder() {
     // Save order
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
     orders.unshift(newOrder);
-    localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
+    localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
 
     // Reset cart
     cart = [];
@@ -532,7 +615,7 @@ function renderSuccessReceipt() {
 
         <div class="ticket-qr-box">
             <small style="display:block; font-weight:700; color:var(--text-muted); margin-bottom:6px;">OFFICIAL ORDER TICKET QR</small>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SMARTBAKES-ORDER-${currentOrder.orderId}-TOTAL-INR-${currentOrder.total}" alt="Ticket QR">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ROYALBAKES-ORDER-${currentOrder.orderId}-TOTAL-INR-${currentOrder.total}" alt="Ticket QR">
             <small style="display:block; font-size:10px; color:#8c786c; margin-top:4px;">Scan at counter or delivery for instant order verification</small>
         </div>
     `;
@@ -576,12 +659,26 @@ function updateTimelineState(status) {
     }
 }
 
+/* ================================================================= */
+/* ===================== SMS & WHATSAPP DISPATCH =================== */
+/* ================================================================= */
+function dispatchOrderToSMS() {
+    if (!currentOrder) return;
+    const phone = "+916374334421";
+    const itemsText = currentOrder.items.map(i => `${i.name}(x${i.quantity})`).join(", ");
+    const smsBody = `ROYAL BAKES ORDER: #${currentOrder.orderId} | Cust: ${currentOrder.customerName} (${currentOrder.customerPhone}) | Loc: ${currentOrder.address} | Items: ${itemsText} | Total: Rs.${currentOrder.total} | Pay: ${currentOrder.paymentMethod}`;
+
+    // Universal mobile SMS intent link
+    window.location.href = `sms:${phone}?&body=${encodeURIComponent(smsBody)}`;
+    showToast("Opening SMS to send order to +91 6374334421 📲", "info");
+}
+
 function dispatchOrderToWhatsApp() {
     if (!currentOrder) return;
-    const bakeryPhone = "919876543210";
+    const bakeryPhone = "916374334421";
     const itemsText = currentOrder.items.map(i => `• ${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}`).join("%0A");
 
-    const message = `*🍰 SMART BAKES NEW ORDER — ${currentOrder.orderId}*%0A%0A` +
+    const message = `*👑 ROYAL BAKES NEW ORDER — ${currentOrder.orderId}*%0A%0A` +
         `*👤 Customer:* ${encodeURIComponent(currentOrder.customerName)}%0A` +
         `*📞 Phone:* ${encodeURIComponent(currentOrder.customerPhone)}%0A` +
         `*📍 Address:* ${encodeURIComponent(currentOrder.address)}%0A` +
@@ -591,7 +688,7 @@ function dispatchOrderToWhatsApp() {
         (currentOrder.utr ? ` (UTR: ${encodeURIComponent(currentOrder.utr)})` : ``) + `%0A%0A` +
         `*🛒 Items Ordered:*%0A${itemsText}%0A%0A` +
         `*💵 Grand Total:* ₹${currentOrder.total}%0A%0A` +
-        `_Please confirm delivery schedule!_`;
+        `_Rayarpalayam, Namakkal - Tiruchengode Hwy_`;
 
     window.open(`https://wa.me/${bakeryPhone}?text=${message}`, "_blank");
 }
@@ -612,7 +709,7 @@ function renderKitchenDashboard() {
 function renderKitchenStats() {
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
@@ -658,7 +755,7 @@ function renderKitchenOrders() {
 
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     let filtered = orders;
@@ -738,13 +835,13 @@ function renderKitchenOrders() {
 function setOrderStatus(orderId, newStatus) {
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     const order = orders.find(o => String(o.orderId) === String(orderId));
     if (order) {
         order.status = newStatus;
-        localStorage.setItem("smartbakes_orders", JSON.stringify(orders));
+        localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
         showToast(`Order #${orderId} set to: ${newStatus} ⚡`, "success");
         renderKitchenStats();
         renderKitchenOrders();
@@ -765,7 +862,7 @@ function renderKitchenMenuTable() {
 
     let stockMap = {};
     try {
-        stockMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+        stockMap = JSON.parse(localStorage.getItem("royalbakes_stock_status") || "{}");
     } catch (e) {}
 
     tbody.innerHTML = all.map(prod => {
@@ -797,11 +894,11 @@ function renderKitchenMenuTable() {
 function toggleKitchenStock(prodId) {
     let stockMap = {};
     try {
-        stockMap = JSON.parse(localStorage.getItem("smartbakes_stock_status") || "{}");
+        stockMap = JSON.parse(localStorage.getItem("royalbakes_stock_status") || "{}");
     } catch (e) {}
 
     stockMap[prodId] = stockMap[prodId] === false ? true : false;
-    localStorage.setItem("smartbakes_stock_status", JSON.stringify(stockMap));
+    localStorage.setItem("royalbakes_stock_status", JSON.stringify(stockMap));
     showToast(`Stock updated for item #${prodId} 🔄`, "info");
     renderKitchenMenuTable();
     renderStoreProducts();
@@ -837,10 +934,10 @@ function handleAddNewProduct(e) {
 
     let custom = [];
     try {
-        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+        custom = JSON.parse(localStorage.getItem("royalbakes_custom_products") || "[]");
     } catch (err) {}
     custom.push(newProd);
-    localStorage.setItem("smartbakes_custom_products", JSON.stringify(custom));
+    localStorage.setItem("royalbakes_custom_products", JSON.stringify(custom));
 
     showToast(`Added '${name}' to Bakery Menu! 🎂`, "success");
     closeAddProductModal();
@@ -852,10 +949,10 @@ function deleteKitchenProduct(prodId) {
     if (!confirm("Are you sure you want to delete this product?")) return;
     let custom = [];
     try {
-        custom = JSON.parse(localStorage.getItem("smartbakes_custom_products") || "[]");
+        custom = JSON.parse(localStorage.getItem("royalbakes_custom_products") || "[]");
     } catch (e) {}
     custom = custom.filter(p => p.id !== prodId);
-    localStorage.setItem("smartbakes_custom_products", JSON.stringify(custom));
+    localStorage.setItem("royalbakes_custom_products", JSON.stringify(custom));
     showToast("Product deleted 🗑️", "info");
     renderKitchenMenuTable();
     renderStoreProducts();
@@ -867,7 +964,7 @@ function renderKitchenAnalytics() {
 
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     let salesMap = {};
@@ -912,27 +1009,31 @@ function renderKitchenAnalytics() {
 }
 
 function saveKitchenSettings() {
+    const store = document.getElementById("cfgStoreName").value.trim();
+    const loc = document.getElementById("cfgStoreLoc").value.trim();
     const name = document.getElementById("cfgPayeeName").value.trim();
     const upi = document.getElementById("cfgUpiId").value.trim();
     const bank = document.getElementById("cfgBankTag").value.trim();
     const phone = document.getElementById("cfgPhone").value.trim();
 
     const settings = {
+        storeName: store || "Royal Bakes",
+        storeLoc: loc || "Namakkal - Tiruchengode Highways, Rayarpalayam",
         payeeName: name || "Muthukrishnan S",
         upiId: upi || "muthukrishnans2002@okhdfcbank",
         bankTag: bank || "Indian Bank • 4189",
-        phone: phone || "919876543210"
+        phone: phone || "916374334421"
     };
 
-    localStorage.setItem("smartbakes_settings", JSON.stringify(settings));
-    showToast("Kitchen & UPI Settings Saved! 💾", "success");
+    localStorage.setItem("royalbakes_settings", JSON.stringify(settings));
+    showToast("Royal Bakes Settings Saved! 💾", "success");
     applySettingsToUI();
 }
 
 function applySettingsToUI() {
     let s = null;
     try {
-        s = JSON.parse(localStorage.getItem("smartbakes_settings"));
+        s = JSON.parse(localStorage.getItem("royalbakes_settings"));
     } catch (e) {}
 
     if (s) {
@@ -955,7 +1056,7 @@ function openOrdersModal() {
 
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     list.innerHTML = "";
@@ -1002,7 +1103,7 @@ function closeOrdersModal() {
 function updateCustomerBadges() {
     let orders = [];
     try {
-        orders = JSON.parse(localStorage.getItem("smartbakes_orders") || "[]");
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
     const countBadge = document.getElementById("customerOrdersCountBadge");
@@ -1064,17 +1165,17 @@ function playOrderChimeSound() {
 /* ================= MULTI-TAB STORAGE EVENT SYNC ================== */
 /* ================================================================= */
 window.addEventListener("storage", (e) => {
-    if (e.key === "smartbakes_orders") {
+    if (e.key === "royalbakes_orders") {
         renderKitchenStats();
         renderKitchenOrders();
         updateCustomerBadges();
         playOrderChimeSound();
     }
-    if (e.key === "smartbakes_stock_status" || e.key === "smartbakes_custom_products") {
+    if (e.key === "royalbakes_stock_status" || e.key === "royalbakes_custom_products") {
         renderStoreProducts();
         renderKitchenMenuTable();
     }
-    if (e.key === "smartbakes_settings") {
+    if (e.key === "royalbakes_settings") {
         applySettingsToUI();
     }
 });
@@ -1083,5 +1184,6 @@ window.addEventListener("storage", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
     renderStoreProducts();
     applySettingsToUI();
+    applyCustomerProfile();
     updateCustomerBadges();
 });
