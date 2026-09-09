@@ -44,7 +44,7 @@
             <div class="landing-top-badge">👑 ROYAL BAKES • ARTISANAL BAKERY & CAFE</div>
             <h1>Freshness You Can Taste.<br><i>Happiness in Every Bite.</i></h1>
             <p class="landing-loc-text">📍 Namakkal - Tiruchengode Highways, Rayarpalayam | 📞 +91 6374334421</p>
-            <p class="landing-sub-text">Welcome to the official Royal Bakes digital portal. Choose your portal below to continue:</p>
+            <p class="landing-sub-text">Welcome to the official Royal Bakes digital portal. Choose your portal below:</p>
 
             <div class="portal-choice-grid">
                 <!-- CUSTOMER CHOICE CARD -->
@@ -56,7 +56,7 @@
                     <div class="choice-features">
                         <span>✓ Live Bakery Stock</span>
                         <span>✓ Instant UPI QR Payment</span>
-                        <span>✓ Real-Time SMS & Order Tracker</span>
+                        <span>✓ Real-Time Cross-Device Tracking</span>
                     </div>
                     <button class="choice-btn primary">Enter Customer Store →</button>
                 </div>
@@ -66,9 +66,9 @@
                     <div class="choice-badge staff-badge">STAFF ONLY</div>
                     <div class="choice-icon">🏪</div>
                     <h2>Shopkeeper / Kitchen Portal</h2>
-                    <p>Protected bakery staff dashboard for receiving real-time live orders, kitchen audio chimes, 1-click stock toggles, and revenue reports.</p>
+                    <p>Protected bakery staff dashboard for receiving live orders in real time, kitchen audio chimes, 1-click stock toggles, and revenue reports.</p>
                     <div class="choice-features">
-                        <span>✓ Real-time Order Audio Chime</span>
+                        <span>✓ Live Real-Time Kitchen Sync & Chime</span>
                         <span>✓ In-Stock / Out-of-Stock Toggle</span>
                         <span>✓ Sales & Revenue Breakdown</span>
                     </div>
@@ -446,7 +446,7 @@
                 </div>
                 <div class="sk-top-actions">
                     <span class="live-status-pill">
-                        <span class="live-pulse-dot"></span> Kitchen Sync Live
+                        <span class="live-pulse-dot"></span> Kitchen Sync Live (SSE)
                     </span>
                     <button class="sk-primary-btn" onclick="openAddProductModal()">+ Add New Product</button>
                     <button class="sk-secondary-btn" onclick="logoutShopkeeper()">Logout 🚪</button>
@@ -613,10 +613,10 @@
                     🔑 Authorized Kitchen Staff Only
                 </div>
                 <label>Username *</label>
-                <input type="text" id="skLoginUser" placeholder="Enter username (e.g. muthu_royal)" required>
+                <input type="text" id="skLoginUser" placeholder="Enter username (muthu_royal)" required>
 
                 <label>Password *</label>
-                <input type="password" id="skLoginPass" placeholder="Enter password" required>
+                <input type="password" id="skLoginPass" placeholder="Enter password (royal123)" required>
 
                 <button type="submit" class="sk-primary-btn full-btn">
                     Verify & Enter Kitchen Portal →

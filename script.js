@@ -100,16 +100,53 @@ let currentPaymentMethod = "upi";
 let currentOrder = null;
 let currentStoreCategory = "all";
 let currentKitchenFilter = "all";
-let isShopkeeperLoggedIn = false;
+let isShopkeeperLoggedIn = localStorage.getItem("royalbakes_sk_logged") === "true";
 
-// BroadcastChannel for instant multi-tab real time synchronization
+// Cloud Realtime Channel URL for multi-device sync
+const NTFY_CHANNEL_ORDERS = "https://ntfy.sh/royalbakes_orders_muthu_6374334421";
+const NTFY_CHANNEL_STATUS = "https://ntfy.sh/royalbakes_status_muthu_6374334421";
+
+// BroadcastChannel for instant same-device / multi-tab synchronization
 let royalChannel = null;
 try {
     royalChannel = new BroadcastChannel("royalbakes_realtime_sync");
     royalChannel.onmessage = (ev) => {
-        handleRealTimeBroadcast(ev.data);
+        handleRealTimeEvent(ev.data);
     };
 } catch (e) {}
+
+// Setup Cloud SSE Listener for Cross-Device Real-Time Sync
+function initCloudRealtimeSync() {
+    try {
+        const orderSource = new EventSource(NTFY_CHANNEL_ORDERS + "/sse");
+        orderSource.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === "message" && data.message) {
+                    const payload = JSON.parse(data.message);
+                    if (payload && payload.orderId) {
+                        saveOrderLocally(payload, false);
+                    }
+                }
+            } catch (e) {}
+        };
+
+        const statusSource = new EventSource(NTFY_CHANNEL_STATUS + "/sse");
+        statusSource.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === "message" && data.message) {
+                    const payload = JSON.parse(data.message);
+                    if (payload && payload.orderId && payload.status) {
+                        applyOrderStatusLocally(payload.orderId, payload.status, false);
+                    }
+                }
+            } catch (e) {}
+        };
+    } catch (e) {
+        console.log("SSE fallback active");
+    }
+}
 
 /* ================================================================= */
 /* ===================== VIEW MANAGEMENT =========================== */
@@ -117,6 +154,9 @@ try {
 function showView(viewName) {
     document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".nav-portal-btn").forEach(b => b.classList.remove("active"));
+
+    // Save active view so refresh maintains state
+    sessionStorage.setItem("royalbakes_view", viewName);
 
     if (viewName === "landing") {
         document.getElementById("viewLanding")?.classList.add("active");
@@ -138,7 +178,6 @@ function showView(viewName) {
         document.getElementById("viewShopkeeper")?.classList.add("active");
         document.getElementById("navBtnShopkeeper")?.classList.add("active");
         renderKitchenDashboard();
-        showToast("Kitchen Dashboard Active 🏪", "info");
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -165,6 +204,7 @@ function handleShopkeeperLogin(e) {
 
     if (user === "muthu_royal" && pass === "royal123") {
         isShopkeeperLoggedIn = true;
+        localStorage.setItem("royalbakes_sk_logged", "true");
         closeShopkeeperAuthModal();
         showToast("Welcome Muthu! Logged into Royal Bakes Kitchen 👑", "success");
         showView("shopkeeper");
@@ -175,6 +215,7 @@ function handleShopkeeperLogin(e) {
 
 function logoutShopkeeper() {
     isShopkeeperLoggedIn = false;
+    localStorage.removeItem("royalbakes_sk_logged");
     showToast("Logged out of Kitchen Portal 🚪", "info");
     showView("landing");
 }
@@ -565,15 +606,19 @@ function submitFinalOrder() {
 
     currentOrder = newOrder;
 
-    // Save order to LocalStorage
-    let orders = [];
-    try {
-        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
-    } catch (e) {}
-    orders.unshift(newOrder);
-    localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
+    // Save locally
+    saveOrderLocally(newOrder, true);
 
-    // Broadcast in real-time across tabs/windows
+    // Broadcast across Cloud SSE (cross-device)
+    try {
+        fetch(NTFY_CHANNEL_ORDERS, {
+            method: "POST",
+            body: JSON.stringify(newOrder),
+            headers: { "Title": "New Royal Bakes Order: " + newOrder.orderId }
+        }).catch(() => {});
+    } catch (e) {}
+
+    // Broadcast on same-device multi-tab
     if (royalChannel) {
         royalChannel.postMessage({ type: "NEW_ORDER", order: newOrder });
     }
@@ -586,9 +631,31 @@ function submitFinalOrder() {
     // Render Success View
     renderSuccessReceipt();
     showView("success");
-    playOrderChimeSound();
     updateCustomerBadges();
-    showToast("Order transmitted to Royal Bakes Kitchen! 🎂", "success");
+    showToast("Order confirmed & sent to Royal Bakes Kitchen! 🎂", "success");
+}
+
+function saveOrderLocally(newOrder, isSelfPlaced = false) {
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
+    } catch (e) {}
+
+    const exists = orders.some(o => String(o.orderId) === String(newOrder.orderId));
+    if (!exists) {
+        orders.unshift(newOrder);
+        localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
+
+        // Play chime only if we are on the Shopkeeper portal or logged in as staff
+        if (isShopkeeperLoggedIn && !isSelfPlaced) {
+            playOrderChimeSound();
+            showToast(`🔔 Incoming Order #${newOrder.orderId} from ${newOrder.customerName}!`, "success");
+        }
+
+        renderKitchenStats();
+        renderKitchenOrders();
+        updateCustomerBadges();
+    }
 }
 
 /* ================================================================= */
@@ -852,6 +919,24 @@ function renderKitchenOrders() {
 }
 
 function setOrderStatus(orderId, newStatus) {
+    applyOrderStatusLocally(orderId, newStatus, true);
+
+    // Broadcast across Cloud SSE
+    try {
+        fetch(NTFY_CHANNEL_STATUS, {
+            method: "POST",
+            body: JSON.stringify({ orderId, status: newStatus }),
+            headers: { "Title": `Order ${orderId} Update: ${newStatus}` }
+        }).catch(() => {});
+    } catch (e) {}
+
+    // Broadcast across same-device tabs
+    if (royalChannel) {
+        royalChannel.postMessage({ type: "STATUS_UPDATE", orderId, status: newStatus });
+    }
+}
+
+function applyOrderStatusLocally(orderId, newStatus, showPrompt = true) {
     let orders = [];
     try {
         orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
@@ -861,18 +946,20 @@ function setOrderStatus(orderId, newStatus) {
     if (order) {
         order.status = newStatus;
         localStorage.setItem("royalbakes_orders", JSON.stringify(orders));
-        
-        // Broadcast in real-time across tabs
-        if (royalChannel) {
-            royalChannel.postMessage({ type: "STATUS_UPDATE", orderId, status: newStatus });
-        }
 
-        showToast(`Order #${orderId} set to: ${newStatus} ⚡`, "success");
+        if (showPrompt) {
+            showToast(`Order #${orderId} set to: ${newStatus} ⚡`, "success");
+        }
         renderKitchenStats();
         renderKitchenOrders();
         updateCustomerBadges();
+
         if (currentOrder && String(currentOrder.orderId) === String(orderId)) {
+            currentOrder.status = newStatus;
             updateTimelineState(newStatus);
+            if (!showPrompt) {
+                showToast(`Your Order status is now: ${newStatus}! 🚚`, "info");
+            }
         }
     }
 }
@@ -924,7 +1011,7 @@ function toggleKitchenStock(prodId) {
 
     stockMap[prodId] = stockMap[prodId] === false ? true : false;
     localStorage.setItem("royalbakes_stock_status", JSON.stringify(stockMap));
-    
+
     if (royalChannel) {
         royalChannel.postMessage({ type: "STOCK_UPDATE", prodId, inStock: stockMap[prodId] });
     }
@@ -987,7 +1074,7 @@ function deleteKitchenProduct(prodId) {
     } catch (e) {}
     custom = custom.filter(p => p.id !== prodId);
     localStorage.setItem("royalbakes_custom_products", JSON.stringify(custom));
-    
+
     if (royalChannel) {
         royalChannel.postMessage({ type: "PRODUCT_DELETED", prodId });
     }
@@ -1210,23 +1297,12 @@ function playOrderChimeSound() {
 /* ================================================================= */
 /* ================= REAL-TIME BROADCAST & STORAGE SYNC ============ */
 /* ================================================================= */
-function handleRealTimeBroadcast(data) {
+function handleRealTimeEvent(data) {
     if (!data) return;
     if (data.type === "NEW_ORDER") {
-        renderKitchenStats();
-        renderKitchenOrders();
-        updateCustomerBadges();
-        playOrderChimeSound();
-        showToast(`🔔 New Incoming Order #${data.order.orderId}!`, "success");
+        saveOrderLocally(data.order, false);
     } else if (data.type === "STATUS_UPDATE") {
-        renderKitchenStats();
-        renderKitchenOrders();
-        updateCustomerBadges();
-        if (currentOrder && String(currentOrder.orderId) === String(data.orderId)) {
-            currentOrder.status = data.status;
-            updateTimelineState(data.status);
-            showToast(`Order status updated to: ${data.status} 🚚`, "info");
-        }
+        applyOrderStatusLocally(data.orderId, data.status, false);
     } else if (data.type === "STOCK_UPDATE" || data.type === "PRODUCT_ADDED" || data.type === "PRODUCT_DELETED") {
         renderStoreProducts();
         renderKitchenMenuTable();
@@ -1238,7 +1314,6 @@ window.addEventListener("storage", (e) => {
         renderKitchenStats();
         renderKitchenOrders();
         updateCustomerBadges();
-        playOrderChimeSound();
     }
     if (e.key === "royalbakes_stock_status" || e.key === "royalbakes_custom_products") {
         renderStoreProducts();
@@ -1251,10 +1326,19 @@ window.addEventListener("storage", (e) => {
 
 // INITIALIZE ON LOAD
 document.addEventListener("DOMContentLoaded", () => {
-    // Starts directly on Home Landing view with Two Big Cards
-    showView("landing");
+    // Check saved view or stay on shopkeeper if already logged in
+    const lastView = sessionStorage.getItem("royalbakes_view");
+    if (lastView === "shopkeeper" && isShopkeeperLoggedIn) {
+        showView("shopkeeper");
+    } else if (lastView === "customer") {
+        showView("customer");
+    } else {
+        showView("landing");
+    }
+
     renderStoreProducts();
     applySettingsToUI();
     applyCustomerProfile();
     updateCustomerBadges();
+    initCloudRealtimeSync();
 });
