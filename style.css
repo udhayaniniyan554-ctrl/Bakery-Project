@@ -1144,6 +1144,17 @@ body {
     font-size: 13px;
 }
 
+.simulate-pay-btn {
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+    color: #2b6cb0;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
 .cod-info-card {
     text-align: center;
     padding: 20px;
@@ -1704,7 +1715,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 15px;
 }
@@ -1730,6 +1741,19 @@ body {
 .admin-top-actions {
     display: flex;
     align-items: center;
+    gap: 10px;
+}
+
+.low-stock-alert-banner {
+    background: #fffaf0;
+    border: 1.5px solid #dd6b20;
+    padding: 14px 20px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -1920,6 +1944,17 @@ body {
 .quick-restock-btn:hover {
     background: var(--accent);
     color: var(--primary);
+}
+
+.reorder-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 /* SETTINGS CARD */

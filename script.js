@@ -415,7 +415,6 @@ function getAllProducts() {
         custom = JSON.parse(localStorage.getItem("royalbakes_custom_products") || "[]");
     } catch (e) {}
     
-    // Check inventory adjustments
     let invMap = {};
     try {
         invMap = JSON.parse(localStorage.getItem("royalbakes_inventory") || "{}");
@@ -446,7 +445,6 @@ function renderStoreProducts() {
         return matchesCat && matchesDiet && matchesQuery;
     });
 
-    // Sort products
     if (currentSortOption === "price-asc") {
         filtered.sort((a, b) => a.price - b.price);
     } else if (currentSortOption === "price-desc") {
@@ -852,6 +850,13 @@ function copyUpiVpa() {
     });
 }
 
+function simulatePaymentVerification() {
+    const fakeUtr = "42" + Math.floor(1000000000 + Math.random() * 9000000000);
+    const utrInput = document.getElementById("chkUtr");
+    if (utrInput) utrInput.value = fakeUtr;
+    showToast(`⚡ Simulated UPI Verification Successful! UTR: ${fakeUtr}`, "success");
+}
+
 function submitFinalOrder() {
     const name = document.getElementById("chkName").value.trim();
     const phone = document.getElementById("chkPhone").value.trim();
@@ -899,7 +904,7 @@ function submitFinalOrder() {
         discount: discount,
         deliveryFee: deliveryFee,
         total: grandTotal,
-        status: "Pending" // Initial State
+        status: "Pending"
     };
 
     currentOrder = newOrder;
@@ -1073,7 +1078,6 @@ function renderKitchenQueue() {
         orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
-    // Update KPI badges
     const newCount = orders.filter(o => o.status === "Pending").length;
     const bakingCount = orders.filter(o => o.status === "Baking" || o.status === "Accepted").length;
     const readyCount = orders.filter(o => o.status === "Ready" || o.status === "Out for Delivery").length;
@@ -1089,7 +1093,6 @@ function renderKitchenQueue() {
     if (kReady) kReady.textContent = readyCount;
     if (kComp) kComp.textContent = completedCount;
 
-    // Update Tab Counts
     document.getElementById("kdsTabAllCount").textContent = orders.length;
     document.getElementById("kdsTabPendingCount").textContent = newCount;
     document.getElementById("kdsTabAcceptedCount").textContent = orders.filter(o => o.status === "Accepted").length;
@@ -1297,13 +1300,31 @@ function renderAdminStats() {
     const aov = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
 
     const allProds = getAllProducts();
-    const lowStockCount = allProds.filter(p => p.stock <= (p.minStock || 5)).length;
+    const lowStockItems = allProds.filter(p => p.stock <= (p.minStock || 5));
 
     document.getElementById("admStatRevenue").textContent = `₹${totalRev}`;
     document.getElementById("admStatTotal").textContent = totalOrders;
     document.getElementById("admStatAov").textContent = `₹${aov}`;
-    document.getElementById("admStatLowStock").textContent = lowStockCount;
+    document.getElementById("admStatLowStock").textContent = lowStockItems.length;
     document.getElementById("invTotalCount").textContent = allProds.length;
+
+    // Render low stock banner
+    const banner = document.getElementById("admLowStockAlertBanner");
+    if (banner) {
+        if (lowStockItems.length > 0) {
+            banner.style.display = "flex";
+            banner.innerHTML = `
+                <div>
+                    <strong>⚠️ Low Stock Warning:</strong> ${lowStockItems.length} item(s) are below threshold (${lowStockItems.map(i => `${i.name} [${i.stock} left]`).join(", ")})
+                </div>
+                <button class="quick-restock-btn" onclick="switchAdminTab('inventory')" style="background:#dd6b20; color:white; border:none; font-weight:800;">
+                    Manage Inventory →
+                </button>
+            `;
+        } else {
+            banner.style.display = "none";
+        }
+    }
 }
 
 function renderAdminCharts() {
@@ -1321,11 +1342,9 @@ function renderRevenueSvgChart() {
         orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
-    // Build last 7 days data
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const baseRevenue = [3200, 4100, 3800, 5200, 6800, 8900, 9400];
     
-    // Add today's live revenue to the last day
     const liveToday = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
     baseRevenue[6] += liveToday;
 
@@ -1488,6 +1507,7 @@ function quickRestockItem(prodId, amount) {
 
     showToast(`Restocked +${amount} units for ${prod.name}! 📦`, "success");
     renderAdminInventoryTable();
+    renderAdminStats();
     renderStoreProducts();
 }
 
@@ -1670,7 +1690,7 @@ function applySettingsToUI() {
 }
 
 /* ================================================================= */
-/* ===================== MY ORDERS MODAL =========================== */
+/* ===================== MY ORDERS MODAL & REORDER ================= */
 /* ================================================================= */
 function openOrdersModal() {
     const modal = document.getElementById("ordersModalOverlay");
@@ -1708,9 +1728,9 @@ function openOrdersModal() {
                     </div>
                     <small style="color:var(--text-muted);">${order.date} • ${order.fulfillmentType || 'Delivery'}</small>
                     <div style="margin:8px 0; font-size:13px;">🛒 ${itemsText}</div>
-                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;">
-                        <span>Mode: ${order.paymentMethod}</span>
-                        <span style="color:var(--primary);">₹${order.total}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700;">
+                        <span style="color:var(--primary);">₹${order.total} (${order.paymentMethod})</span>
+                        <button class="reorder-btn" onclick="reorderPreviousItems('${order.orderId}')">🔄 Reorder</button>
                     </div>
                 </div>
             `;
@@ -1722,6 +1742,26 @@ function openOrdersModal() {
 
 function closeOrdersModal() {
     document.getElementById("ordersModalOverlay").style.display = "none";
+}
+
+function reorderPreviousItems(orderId) {
+    let orders = [];
+    try {
+        orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
+    } catch (e) {}
+
+    const order = orders.find(o => String(o.orderId) === String(orderId));
+    if (!order) return;
+
+    cart = [];
+    order.items.forEach(i => {
+        cart.push({ ...i });
+    });
+
+    closeOrdersModal();
+    updateCartUI();
+    openCartDrawer();
+    showToast("Items from previous order loaded into cart! 🛍️", "success");
 }
 
 function updateCustomerBadges() {

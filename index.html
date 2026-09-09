@@ -426,7 +426,10 @@
                             </div>
 
                             <div class="utr-field-block">
-                                <label for="chkUtr">UPI Transaction Ref / UTR No. <small>(Recommended for faster processing)</small></label>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label for="chkUtr">UPI Transaction Ref / UTR No.</label>
+                                    <button type="button" class="simulate-pay-btn" onclick="simulatePaymentVerification()">⚡ Auto-Verify Demo UPI</button>
+                                </div>
                                 <input type="text" id="chkUtr" maxlength="16" placeholder="e.g. 423871928371 (12-digit UTR)">
                             </div>
                         </div>
@@ -663,6 +666,9 @@
                     <button class="sk-secondary-btn" onclick="logoutStaff()">Logout 🚪</button>
                 </div>
             </div>
+
+            <!-- LOW STOCK ALERT BANNER (IF ANY) -->
+            <div id="admLowStockAlertBanner" class="low-stock-alert-banner" style="display:none;"></div>
 
             <!-- EXECUTIVE KPI TILES -->
             <div class="sk-stats-grid">
