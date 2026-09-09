@@ -38,8 +38,8 @@ Royal Bakes is a dedicated, zero-commission digital ordering portal and real-tim
 
 ## Live Deployment
 
-- **Production URL (GitHub Pages)**: https://udhayaniniyan554-ctrl.github.io/Bakery-Project/
-- **Mirror Deployment (Netlify)**: https://glittering-haupia-7dc84c.netlify.app/
+- **Production URL (Netlify)**: https://royalbakes2026.netlify.app/
+- **Mirror Deployment (GitHub Pages)**: https://udhayaniniyan554-ctrl.github.io/Bakery-Project/
 
 ---
 
