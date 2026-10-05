@@ -857,7 +857,10 @@ function simulatePaymentVerification() {
     showToast(`⚡ Simulated UPI Verification Successful! UTR: ${fakeUtr}`, "success");
 }
 
+let isSubmittingOrder = false;
 function submitFinalOrder() {
+    if (isSubmittingOrder) return;
+
     const name = document.getElementById("chkName").value.trim();
     const phone = document.getElementById("chkPhone").value.trim();
     const address = currentFulfillmentMode === "delivery" ? document.getElementById("chkAddress").value.trim() : "Store Pickup (Rayarpalayam Counter)";
@@ -878,67 +881,82 @@ function submitFinalOrder() {
         return;
     }
 
-    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    let discount = 0;
-    if (appliedCoupon === "SWEET10") discount = Math.round(subtotal * 0.10);
-    if (appliedCoupon === "ROYAL50" && subtotal >= 399) discount = 50;
-    
-    let deliveryFee = 30;
-    if (currentFulfillmentMode === "pickup" || subtotal >= 499) deliveryFee = 0;
-    const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
-
-    const newOrder = {
-        orderId: "RB-" + Math.floor(100000 + Math.random() * 900000),
-        date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
-        timestamp: Date.now(),
-        customerName: name,
-        customerPhone: phone,
-        fulfillmentType: currentFulfillmentMode === "delivery" ? "Delivery" : "Pickup",
-        address: address,
-        slot: slot,
-        note: note,
-        utr: utr,
-        paymentMethod: currentPaymentMethod === "upi" ? "UPI / QR Code" : "Cash on Delivery",
-        items: [...cart],
-        subtotal: subtotal,
-        discount: discount,
-        deliveryFee: deliveryFee,
-        total: grandTotal,
-        status: "Pending"
-    };
-
-    currentOrder = newOrder;
-
-    // Deduct stock in inventory
-    deductInventoryStock(newOrder.items);
-
-    // Save order locally
-    saveOrderLocally(newOrder, true);
-
-    // Broadcast across Cloud SSE (cross-device)
-    try {
-        fetch(NTFY_CHANNEL_ORDERS, {
-            method: "POST",
-            body: JSON.stringify(newOrder),
-            headers: { "Title": "New Royal Bakes Order: " + newOrder.orderId }
-        }).catch(() => {});
-    } catch (e) {}
-
-    // Broadcast on same-device multi-tab
-    if (royalChannel) {
-        royalChannel.postMessage({ type: "NEW_ORDER", order: newOrder });
+    isSubmittingOrder = true;
+    const btn = document.querySelector("#viewCheckout .primary-btn");
+    if (btn) {
+        btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #fff; border-bottom-color:transparent; border-radius:50%; animation: rotation 1s linear infinite;"></span> Processing...`;
+        btn.style.pointerEvents = "none";
     }
 
-    // Reset cart
-    cart = [];
-    appliedCoupon = null;
-    updateCartUI();
+    setTimeout(() => {
+        const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        let discount = 0;
+        if (appliedCoupon === "SWEET10") discount = Math.round(subtotal * 0.10);
+        if (appliedCoupon === "ROYAL50" && subtotal >= 399) discount = 50;
+        
+        let deliveryFee = 30;
+        if (currentFulfillmentMode === "pickup" || subtotal >= 499) deliveryFee = 0;
+        const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
 
-    // Render Success View
-    renderSuccessReceipt();
-    showView("success");
-    updateCustomerBadges();
-    showToast("Order transmitted to Royal Bakes Kitchen Queue! 🎂", "success");
+        const newOrder = {
+            orderId: "RB-" + Math.floor(100000 + Math.random() * 900000),
+            date: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+            timestamp: Date.now(),
+            customerName: name,
+            customerPhone: phone,
+            fulfillmentType: currentFulfillmentMode === "delivery" ? "Delivery" : "Pickup",
+            address: address,
+            slot: slot,
+            note: note,
+            utr: utr,
+            paymentMethod: currentPaymentMethod === "upi" ? "UPI / QR Code" : "Cash on Delivery",
+            items: [...cart],
+            subtotal: subtotal,
+            discount: discount,
+            deliveryFee: deliveryFee,
+            total: grandTotal,
+            status: "Placed" // Explicitly changed to match required statuses
+        };
+
+        currentOrder = newOrder;
+
+        // Deduct stock in inventory
+        deductInventoryStock(newOrder.items);
+
+        // Save order locally
+        saveOrderLocally(newOrder, true);
+
+        // Broadcast across Cloud SSE (cross-device)
+        try {
+            fetch(NTFY_CHANNEL_ORDERS, {
+                method: "POST",
+                body: JSON.stringify(newOrder),
+                headers: { "Title": "New Royal Bakes Order: " + newOrder.orderId }
+            }).catch(() => {});
+        } catch (e) {}
+
+        // Broadcast on same-device multi-tab
+        if (royalChannel) {
+            royalChannel.postMessage({ type: "NEW_ORDER", order: newOrder });
+        }
+
+        // Reset cart
+        cart = [];
+        appliedCoupon = null;
+        updateCartUI();
+
+        if (btn) {
+            btn.innerHTML = `Place Order Y'`;
+            btn.style.pointerEvents = "auto";
+        }
+        isSubmittingOrder = false;
+
+        // Render Success View
+        renderSuccessReceipt();
+        showView("success");
+        updateCustomerBadges();
+        showToast("Order transmitted to Royal Bakes Kitchen Queue! YZ'", "success");
+    }, 800);
 }
 
 function deductInventoryStock(orderItems) {
@@ -1042,10 +1060,10 @@ function updateTimelineState(status) {
     [l1, l2, l3, l4].forEach(l => l?.classList.remove("completed"));
 
     s1?.classList.add("completed");
-    if (status === "Accepted") {
+    if (status === "Confirmed") {
         l1?.classList.add("completed");
         s2?.classList.add("completed");
-    } else if (status === "Baking") {
+    } else if (status === "Preparing") {
         l1?.classList.add("completed");
         s2?.classList.add("completed");
         l2?.classList.add("completed");
@@ -1078,8 +1096,8 @@ function renderKitchenQueue() {
         orders = JSON.parse(localStorage.getItem("royalbakes_orders") || "[]");
     } catch (e) {}
 
-    const newCount = orders.filter(o => o.status === "Pending").length;
-    const bakingCount = orders.filter(o => o.status === "Baking" || o.status === "Accepted").length;
+    const newCount = orders.filter(o => o.status === "Placed").length;
+    const bakingCount = orders.filter(o => o.status === "Preparing" || o.status === "Confirmed").length;
     const readyCount = orders.filter(o => o.status === "Ready" || o.status === "Out for Delivery").length;
     const completedCount = orders.filter(o => o.status === "Delivered" || o.status === "Completed").length;
 
@@ -1095,8 +1113,8 @@ function renderKitchenQueue() {
 
     document.getElementById("kdsTabAllCount").textContent = orders.length;
     document.getElementById("kdsTabPendingCount").textContent = newCount;
-    document.getElementById("kdsTabAcceptedCount").textContent = orders.filter(o => o.status === "Accepted").length;
-    document.getElementById("kdsTabBakingCount").textContent = orders.filter(o => o.status === "Baking").length;
+    document.getElementById("kdsTabAcceptedCount").textContent = orders.filter(o => o.status === "Confirmed").length;
+    document.getElementById("kdsTabBakingCount").textContent = orders.filter(o => o.status === "Preparing").length;
     document.getElementById("kdsTabReadyCount").textContent = orders.filter(o => o.status === "Ready").length;
     document.getElementById("kdsTabCompletedCount").textContent = completedCount;
 
@@ -1127,8 +1145,8 @@ function renderKitchenQueue() {
 
     filtered.forEach(order => {
         let stClass = "st-pending";
-        if (order.status === "Accepted") stClass = "st-accepted";
-        if (order.status === "Baking") stClass = "st-baking";
+        if (order.status === "Confirmed") stClass = "st-accepted";
+        if (order.status === "Preparing") stClass = "st-baking";
         if (order.status === "Ready" || order.status === "Out for Delivery") stClass = "st-ready";
         if (order.status === "Delivered" || order.status === "Completed") stClass = "st-delivered";
 
@@ -1145,14 +1163,14 @@ function renderKitchenQueue() {
         const minsAgo = order.timestamp ? Math.floor((Date.now() - order.timestamp) / 60000) : 0;
 
         grid.innerHTML += `
-            <div class="kds-order-card ${order.status === "Pending" ? "priority-high" : ""}">
+            <div class="kds-order-card ${order.status === "Placed" ? "priority-high" : ""}">
                 <div>
                     <div class="kds-card-header">
                         <div>
                             <div class="kds-order-id">Order #${order.orderId}</div>
                             <div class="kds-time-elapsed">🕒 ${order.date} (${minsAgo}m ago)</div>
                         </div>
-                        <span class="status-badge ${stClass}">${order.status || "Pending"}</span>
+                        <span class="status-badge ${stClass}">${order.status || "Placed"}</span>
                     </div>
 
                     <div class="kds-cust-block">
@@ -1715,8 +1733,8 @@ function openOrdersModal() {
         orders.forEach(order => {
             const itemsText = order.items.map(i => `${i.name} (×${i.quantity})`).join(", ");
             let stClass = "st-pending";
-            if (order.status === "Accepted") stClass = "st-accepted";
-            if (order.status === "Baking") stClass = "st-baking";
+            if (order.status === "Confirmed") stClass = "st-accepted";
+            if (order.status === "Preparing") stClass = "st-baking";
             if (order.status === "Ready" || order.status === "Out for Delivery") stClass = "st-ready";
             if (order.status === "Delivered" || order.status === "Completed") stClass = "st-delivered";
 
@@ -1724,7 +1742,7 @@ function openOrdersModal() {
                 <div style="background:#fbf7f4; border-radius:14px; padding:16px; margin-bottom:12px; border:1px solid #ecd8cb;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <strong>Order #${order.orderId}</strong>
-                        <span class="status-badge ${stClass}">${order.status || "Pending"}</span>
+                        <span class="status-badge ${stClass}">${order.status || "Placed"}</span>
                     </div>
                     <small style="color:var(--text-muted);">${order.date} • ${order.fulfillmentType || 'Delivery'}</small>
                     <div style="margin:8px 0; font-size:13px;">🛒 ${itemsText}</div>
@@ -1782,7 +1800,7 @@ function updateCustomerBadges() {
         }
     }
 
-    const pending = orders.filter(o => o.status === "Pending" || o.status === "Baking").length;
+    const pending = orders.filter(o => o.status === "Placed" || o.status === "Preparing").length;
     if (kBadge) {
         if (pending > 0) {
             kBadge.style.display = "inline-block";

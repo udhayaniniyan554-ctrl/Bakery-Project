@@ -8,6 +8,13 @@
 
 ---
 
+## 🚀 Current Development Status
+
+**Project Progress: Approximately 70%**
+This repository reflects a heavily upgraded functional prototype, implementing full customer ordering, real-time inventory deduction, staff kitchen management (KDS), validation, and simulated payment capabilities. Planned for the next milestone (80%-100%) are advanced backend optimizations, robust multi-tenant capabilities, and final field validation.
+
+---
+
 ## 🌟 Table of Contents
 
 1. [Project Overview](#-project-overview)
