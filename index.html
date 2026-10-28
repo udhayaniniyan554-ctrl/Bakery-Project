@@ -214,12 +214,27 @@
                             <option value="nonveg">🔴 Non-Veg</option>
                         </select>
 
+                        <select id="priceTierSelect" class="filter-select" onchange="handlePriceTierFilter(this.value)">
+                            <option value="all">💰 All Prices</option>
+                            <option value="under50">Under ₹50</option>
+                            <option value="50-150">₹50 – ₹150</option>
+                            <option value="150-350">₹150 – ₹350</option>
+                            <option value="above350">₹350 & Above</option>
+                        </select>
+
                         <select id="sortSelect" class="filter-select" onchange="handleSortOption(this.value)">
                             <option value="featured">✨ Featured & Popular</option>
                             <option value="price-asc">💵 Price: Low to High</option>
                             <option value="price-desc">💎 Price: High to Low</option>
                             <option value="rating">⭐ Highest Rated</option>
                         </select>
+
+                        <button id="bestsellerFilterBtn" type="button" class="filter-chip-btn" onclick="toggleBestsellerFilter(this)">
+                            ⭐ Bestsellers
+                        </button>
+                        <button id="inStockFilterBtn" type="button" class="filter-chip-btn" onclick="toggleInStockFilter(this)">
+                            📦 In Stock
+                        </button>
                     </div>
                 </div>
             </div>
@@ -239,6 +254,17 @@
             <!-- PRODUCTS GRID -->
             <div id="storeProductsGrid" class="store-products-grid" aria-live="polite">
                 <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- MOBILE FLOATING CART BAR -->
+        <div id="mobileFloatingCartBar" class="mobile-floating-cart" style="display:none;" onclick="openCartDrawer()">
+            <div class="m-cart-left">
+                <span class="m-cart-badge" id="mCartItemCount">0 ITEMS</span>
+                <span class="m-cart-total" id="mCartSubtotal">₹0</span>
+            </div>
+            <div class="m-cart-right">
+                <span>View Basket</span> 🛒 →
             </div>
         </div>
 
@@ -427,10 +453,11 @@
 
                             <div class="utr-field-block">
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <label for="chkUtr">UPI Transaction Ref / UTR No.</label>
-                                    <button type="button" class="simulate-pay-btn" onclick="simulatePaymentVerification()">⚡ Auto-Verify Demo UPI</button>
+                                    <label for="chkUtr">UPI Transaction Ref / UTR No. (12 Digits) *</label>
+                                    <button type="button" class="simulate-pay-btn" onclick="fillDemoTestUtr()">⚡ Use Demo Test UTR</button>
                                 </div>
-                                <input type="text" id="chkUtr" maxlength="16" placeholder="e.g. 423871928371 (12-digit UTR)">
+                                <input type="text" id="chkUtr" maxlength="16" placeholder="e.g. 423871928371 (12-digit UTR)" oninput="handleUtrInputChange(this.value)">
+                                <div id="utrValidationBadge" class="utr-val-badge"></div>
                             </div>
                         </div>
 
@@ -513,7 +540,7 @@
                     <div class="tracker-connector" id="trackLine1"></div>
                     <div class="tracker-node" id="trackStep2">
                         <div class="tracker-circle">2</div>
-                        <span>Confirmed</span>
+                        <span>Accepted</span>
                     </div>
                     <div class="tracker-connector" id="trackLine2"></div>
                     <div class="tracker-node" id="trackStep3">
@@ -575,8 +602,11 @@
                     <span class="live-status-pill">
                         <span class="live-pulse-dot"></span> Live Sync Active (SSE)
                     </span>
+                    <button id="kdsChimeToggleBtn" class="kds-action-btn secondary" onclick="toggleChimeMute()" title="Mute or Unmute Kitchen Chime">
+                        🔊 Chime ON
+                    </button>
                     <button class="kds-action-btn secondary" onclick="testAudioChime()" title="Test Kitchen Speaker">
-                        🔊 Test Chime
+                        🔔 Test Chime
                     </button>
                     <button class="kds-action-btn primary" onclick="showView('admin')">
                         📊 Switch to Admin
@@ -624,7 +654,7 @@
                 <div class="kds-filter-tabs">
                     <button class="kds-tab-pill active" onclick="filterKdsStatus('all', this)">All Orders (<span id="kdsTabAllCount">0</span>)</button>
                     <button class="kds-tab-pill" onclick="filterKdsStatus('Pending', this)">New (<span id="kdsTabPendingCount">0</span>)</button>
-                    <button class="kds-tab-pill" onclick="filterKdsStatus('Confirmed', this)">Confirmed (<span id="kdsTabConfirmedCount">0</span>)</button>
+                    <button class="kds-tab-pill" onclick="filterKdsStatus('Accepted', this)">Accepted (<span id="kdsTabAcceptedCount">0</span>)</button>
                     <button class="kds-tab-pill" onclick="filterKdsStatus('Baking', this)">Baking 🎂 (<span id="kdsTabBakingCount">0</span>)</button>
                     <button class="kds-tab-pill" onclick="filterKdsStatus('Ready', this)">Ready 📦 (<span id="kdsTabReadyCount">0</span>)</button>
                     <button class="kds-tab-pill" onclick="filterKdsStatus('Delivered', this)">Completed ✅ (<span id="kdsTabCompletedCount">0</span>)</button>
@@ -785,8 +815,22 @@
             <!-- ADMIN TAB 3: MASTER ORDERS LOG -->
             <div id="admTabPanelOrders" class="sk-tab-panel">
                 <div class="sk-menu-header-bar">
-                    <h3>Master Orders History & Tax Invoices</h3>
-                    <button class="sk-secondary-btn" onclick="exportOrdersCSV()">📥 Export to CSV</button>
+                    <div>
+                        <h3>Master Orders History & Tax Invoices</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Filter orders by status or download complete accounting CSV audit trail.</p>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="admOrdersFilterStatus" class="filter-select" onchange="renderAdminMasterOrders()" style="min-width:160px;">
+                            <option value="all">📋 All Statuses</option>
+                            <option value="Pending">🔔 Pending / New</option>
+                            <option value="Accepted">👍 Accepted</option>
+                            <option value="Baking">🎂 Baking in Oven</option>
+                            <option value="Ready">📦 Ready for Handover</option>
+                            <option value="Delivered">✅ Delivered / Completed</option>
+                            <option value="Cancelled">❌ Cancelled</option>
+                        </select>
+                        <button class="sk-secondary-btn" onclick="exportOrdersCSV()">📥 Export to CSV</button>
+                    </div>
                 </div>
                 <div class="sk-table-container">
                     <table class="sk-data-table">
@@ -909,19 +953,55 @@
         <div class="orders-modal-content auth-modal-box" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div>
-                    <span class="drawer-sub">CUSTOMER SIGN IN</span>
-                    <h2>Welcome to Royal Bakes</h2>
+                    <span class="drawer-sub" id="custModalSub">CUSTOMER ACCOUNT</span>
+                    <h2 id="custModalTitle">Welcome to Royal Bakes</h2>
                 </div>
                 <button class="drawer-close-btn" onclick="closeCustomerAuthModal()">✕</button>
             </div>
-            <form onsubmit="handleCustomerLogin(event)" class="add-product-form">
+            
+            <!-- LOGGED-IN CUSTOMER PROFILE VIEW -->
+            <div id="custProfileCard" style="display:none;" class="cust-profile-display">
+                <div class="cust-profile-header">
+                    <div class="cust-avatar-large">👤</div>
+                    <div>
+                        <h3 id="custProfileDisplayName">Anand Kumar</h3>
+                        <p id="custProfileDisplayPhone" style="color:var(--text-muted); font-size:13px;">📞 9876543210</p>
+                    </div>
+                </div>
+                <div class="cust-profile-details">
+                    <div style="margin-bottom:8px;">
+                        <small style="color:var(--text-muted); font-weight:700;">DEFAULT DELIVERY ADDRESS:</small>
+                        <div id="custProfileDisplayAddress" style="font-size:13px; color:var(--text-main); margin-top:2px;">No address saved yet.</div>
+                    </div>
+                    <div style="font-size:12.5px; color:var(--text-muted);">
+                        <span>Total Orders Placed: <strong id="custProfileOrdersCount">0</strong></span>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+                    <button type="button" class="sk-primary-btn full-btn" onclick="openOrdersModal(); closeCustomerAuthModal();">
+                        📦 View My Orders
+                    </button>
+                    <button type="button" class="sk-secondary-btn full-btn" onclick="toggleEditCustomerProfile(true)">
+                        ✏️ Edit Name / Address
+                    </button>
+                    <button type="button" class="kds-action-btn logout" style="width:100%; justify-content:center; padding:10px;" onclick="handleCustomerLogout()">
+                        Sign Out 🚪
+                    </button>
+                </div>
+            </div>
+
+            <!-- LOGIN / EDIT FORM -->
+            <form id="custLoginForm" onsubmit="handleCustomerLogin(event)" class="add-product-form">
                 <label for="custLoginName">Your Full Name *</label>
-                <input type="text" id="custLoginName" placeholder="e.g. Anand Kumar" required>
+                <input type="text" id="custLoginName" placeholder="e.g. Anand Kumar" required autocomplete="name">
 
                 <label for="custLoginPhone">Mobile Number (10 Digits) *</label>
-                <input type="tel" id="custLoginPhone" maxlength="10" placeholder="e.g. 9876543210" required>
+                <input type="tel" id="custLoginPhone" maxlength="10" placeholder="e.g. 9876543210" required autocomplete="tel">
 
-                <button type="submit" class="sk-primary-btn full-btn">
+                <label for="custLoginAddress">Default Delivery Address (Optional)</label>
+                <textarea id="custLoginAddress" rows="2" placeholder="Door No, Street Name, Rayarpalayam / Namakkal Area"></textarea>
+
+                <button type="submit" id="custLoginSubmitBtn" class="sk-primary-btn full-btn">
                     Save Profile & Continue 🛍️
                 </button>
             </form>
@@ -1066,6 +1146,77 @@
                 </select>
 
                 <button type="submit" class="sk-primary-btn full-btn">+ Add Item to Bakery Menu</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- =================== MODAL: EDIT PRODUCT ========================= -->
+    <!-- ================================================================= -->
+    <div id="editProductModalOverlay" class="orders-modal-overlay" onclick="closeEditProductModal()">
+        <div class="orders-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="drawer-sub">INVENTORY CONTROL</span>
+                    <h2>Edit Bakery Specialty</h2>
+                </div>
+                <button class="drawer-close-btn" onclick="closeEditProductModal()">✕</button>
+            </div>
+            <form onsubmit="handleSaveProductEdit(event)" class="add-product-form">
+                <input type="hidden" id="editProdId" value="">
+
+                <label for="editProdName">Item Name *</label>
+                <input type="text" id="editProdName" required placeholder="e.g. Belgian Truffle Pastry">
+
+                <div class="form-row-grid">
+                    <div>
+                        <label for="editProdCat">Category *</label>
+                        <select id="editProdCat" class="form-select">
+                            <option value="cakes">🎂 Cakes</option>
+                            <option value="pastries">🍰 Pastries</option>
+                            <option value="snacks">🥟 Snacks & Puffs</option>
+                            <option value="buns">🥐 Buns & Breads</option>
+                            <option value="cookies">🍪 Cookies</option>
+                            <option value="desserts">🍮 Desserts</option>
+                            <option value="drinks">🥤 Beverages</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editProdPrice">Selling Price (₹) *</label>
+                        <input type="number" id="editProdPrice" required min="1" placeholder="e.g. 150">
+                    </div>
+                </div>
+
+                <div class="form-row-grid">
+                    <div>
+                        <label for="editProdStock">Current Stock Units *</label>
+                        <input type="number" id="editProdStock" required min="0" value="20">
+                    </div>
+                    <div>
+                        <label for="editProdMinStock">Low Stock Threshold *</label>
+                        <input type="number" id="editProdMinStock" required min="1" value="5">
+                    </div>
+                </div>
+
+                <div class="form-row-grid">
+                    <div>
+                        <label for="editProdPrepTime">Prep / Bake Time</label>
+                        <input type="text" id="editProdPrepTime" value="20 mins" placeholder="e.g. 25 mins">
+                    </div>
+                    <div>
+                        <label for="editProdDiet">Dietary Classification</label>
+                        <select id="editProdDiet" class="form-select">
+                            <option value="true">🟢 Pure Vegetarian / Eggless</option>
+                            <option value="false">🔴 Non-Vegetarian (Contains Egg)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label for="editProdDesc">Short Description</label>
+                <textarea id="editProdDesc" rows="2" placeholder="Rich handcrafted specialty baked fresh in Rayarpalayam."></textarea>
+
+                <button type="submit" class="sk-primary-btn full-btn">💾 Save Changes to Product</button>
             </form>
         </div>
     </div>

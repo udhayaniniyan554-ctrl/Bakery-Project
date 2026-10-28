@@ -2330,6 +2330,176 @@ body {
     }
 }
 
+/* ================================================================= */
+/* ==================== REVIEW 3 UI ENHANCEMENTS =================== */
+/* ================================================================= */
+
+/* Cart Item Delete Button */
+.cart-item-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.cart-item-delete-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Customer Profile Card in Auth Modal */
+.cust-profile-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-light), #f4dfd0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+}
+.profile-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg-page);
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+}
+.profile-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-main);
+}
+.profile-info-row span:first-child {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.cust-edit-form {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-color);
+}
+
+/* Edit Product Modal Box */
+.edit-prod-modal-box {
+    max-width: 560px;
+    width: 92%;
+}
+
+/* Mobile Floating Quick Cart Bar */
+.mobile-floating-cart-bar {
+    position: fixed;
+    bottom: 18px;
+    left: 16px;
+    right: 16px;
+    max-width: 440px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(35, 18, 11, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 990;
+    cursor: pointer;
+    border: 1.5px solid rgba(212, 154, 106, 0.4);
+    animation: slideUpFloat 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@keyframes slideUpFloat {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.mobile-floating-cart-bar:active {
+    transform: scale(0.98);
+}
+.m-cart-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.m-cart-icon {
+    font-size: 22px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px;
+    border-radius: 10px;
+    line-height: 1;
+}
+.m-cart-btn {
+    background: var(--accent);
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+}
+
+/* Admin Orders Status Filter Bar */
+.adm-orders-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.adm-orders-filter-bar select {
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* Category Filter Bar Horizontal Scroll */
+.category-filter-bar {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+.category-pill {
+    flex-shrink: 0;
+}
+
+/* ================================================================= */
+/* ==================== RESPONSIVE MEDIA QUERIES =================== */
+/* ================================================================= */
 @media (max-width: 868px) {
     .portal-choice-grid,
     .checkout-two-col-grid,
@@ -2346,5 +2516,107 @@ body {
     }
     .form-row-grid {
         grid-template-columns: 1fr;
+    }
+    .portal-nav-bar {
+        padding: 10px 16px;
+    }
+    .landing-hero-container h1 {
+        font-size: 30px;
+    }
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .kds-kpi-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .portal-nav-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .portal-nav-left {
+        justify-content: center;
+    }
+    .portal-nav-right {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .nav-portal-btn {
+        padding: 8px 12px;
+        font-size: 12.5px;
+    }
+    .store-hero {
+        padding: 30px 18px;
+    }
+    .store-hero-content h1 {
+        font-size: 28px;
+    }
+    .menu-control-panel {
+        gap: 16px;
+    }
+    .filter-dropdown-row {
+        flex-wrap: wrap;
+    }
+    .filter-select {
+        flex: 1 1 140px;
+    }
+    .kds-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .kds-top-actions {
+        flex-wrap: wrap;
+    }
+    .orders-modal-content {
+        width: 95vw;
+        max-height: 92vh;
+        padding: 18px 16px;
+    }
+    .cart-drawer {
+        width: 100vw;
+        max-width: 100vw;
+    }
+}
+
+@media (max-width: 480px) {
+    .portal-brand-badge {
+        font-size: 17px;
+    }
+    .portal-sub-text {
+        font-size: 11px;
+    }
+    .landing-trust-bar {
+        grid-template-columns: 1fr;
+    }
+    .landing-hero-container h1 {
+        font-size: 24px;
+    }
+    .store-hero-content h1 {
+        font-size: 24px;
+    }
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .kds-kpi-bar {
+        grid-template-columns: 1fr;
+    }
+    .kds-orders-grid {
+        grid-template-columns: 1fr;
+    }
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+    .checkout-form-box,
+    .checkout-summary-box {
+        padding: 18px 14px;
+    }
+    .hero-action-row {
+        flex-direction: column;
     }
 }
